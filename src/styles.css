@@ -1730,3 +1730,34 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
 .now-normal { border-color: var(--good); }
 @media (max-width: 760px) { .scenario-tiles { grid-auto-columns: 32%; } }
 @media (min-width: 761px) { .scenario-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+
+/* ---------- Simple setup (#/setup): three big questions, one button ---------- */
+.qs-form { display: grid; gap: 1rem; }
+.qs-section { display: grid; gap: .8rem; padding: 1.25rem; }
+.qs-q { font-size: 1.15rem; font-weight: 700; }
+.qs-place { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .8rem; align-items: center;
+            padding: .7rem .9rem; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); }
+.choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+.choice-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.choice { display: grid; justify-items: center; align-content: start; gap: .3rem; text-align: center;
+          padding: 1rem .7rem; min-height: 112px; border-radius: 14px; cursor: pointer;
+          border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: inherit;
+          transition: border-color .15s, background .15s; }
+.choice svg { color: var(--canopy); margin-bottom: .15rem; }
+.choice strong { font-size: 1.02rem; }
+.choice span { font-size: .84rem; color: var(--muted); line-height: 1.35; }
+.choice:hover { border-color: var(--muted); }
+.choice[aria-pressed="true"] { border-color: var(--canopy); background: var(--canopy-soft); box-shadow: inset 0 0 0 1px var(--canopy); }
+.choice:focus-visible, .qs-more:focus-visible { outline: 3px solid var(--canopy); outline-offset: 2px; }
+.qs-go { width: 100%; min-height: 58px; font-size: 1.12rem; border-radius: 14px; justify-content: center; gap: .6rem; }
+.qs-defaults { text-align: center; color: var(--muted); font-size: .85rem; margin-top: -.3rem; }
+.qs-more { justify-self: center; display: inline-flex; align-items: center; gap: .4rem; border: 0; background: none;
+           color: var(--canopy); font: inherit; font-weight: 600; cursor: pointer; padding: .5rem .75rem; border-radius: 10px; }
+.qs-more:hover { background: var(--canopy-soft); }
+.qs-back { justify-self: start; margin-bottom: .5rem; padding-inline: .5rem; }
+@media (max-width: 560px) {
+  .choice-grid-3 { grid-template-columns: minmax(0, 1fr); }
+  .choice-grid-3 .choice { grid-template-columns: auto minmax(0, 1fr); justify-items: start; text-align: start; min-height: 0; column-gap: .8rem; }
+  .choice-grid-3 .choice svg { grid-row: span 2; align-self: center; margin: 0; }
+  .choice { min-height: 104px; padding: .85rem .6rem; }
+}

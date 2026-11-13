@@ -21,9 +21,10 @@ const StartPage = lazy(() => import("./pages/StartPage.jsx"));
 
 
 const DEFAULT_FORM = {
-  lat: 41.6,
-  lon: -93.6,
-  irrigation_mm: 150,
+  lat: 31.42,          // Faisalabad
+  lon: 73.08,
+  place: "Faisalabad",
+  irrigation_mm: 300,
   years: 3,
   start_season: "warm",
   weights: { soil_health: 6, water_saving: 6, climate_resilience: 6, profit: 6 },
@@ -56,7 +57,7 @@ export default function App() {
     setLoading(true);
     setError("");
     go("plans");
-    const { use_soil_test, soil_override, ...rest } = form;
+    const { use_soil_test, soil_override, place, ...rest } = form; // eslint-disable-line no-unused-vars
     try {
       const data = await getRotations({
         ...rest,
@@ -72,7 +73,7 @@ export default function App() {
     }
   }
 
-  const openApp = useCallback(() => go("setup/1", { replace: true }), [go]);
+  const openApp = useCallback(() => go("setup", { replace: true }), [go]);
   // The landing and loading pages sit outside the app shell.
   if (page === "home") return <LandingPage onStart={() => go("start")} />;
   if (page === "start") return <Suspense fallback={<BrandLoader />}><StartPage onDone={openApp} /></Suspense>;
@@ -96,7 +97,7 @@ export default function App() {
   } else if (!result) {
     content = (
       <EmptyState icon={Layers} title={t("noResultsTitle")} body={t("noResultsBody")}
-                  action={<Button variant="primary" onClick={() => go("setup/1")}>{t("startPlan")}</Button>} />
+                  action={<Button variant="primary" onClick={() => go("setup")}>{t("startPlan")}</Button>} />
     );
   } else if (page === "plans") {
     content = <PlansPage result={result} selected={selected} setSelected={setSelected} go={go} />;

@@ -1,6 +1,11 @@
-import { ArrowLeft, ArrowRight, Check, LocateFixed, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  ArrowLeft, ArrowRight, Check, CloudRain, Droplet, Droplets, LocateFixed, MapPin, Scale, Search,
+  SlidersHorizontal, Sprout, Wallet,
+} from "lucide-react";
 import { useI18n } from "../i18n.jsx";
 import { Button, PageHeader } from "../components/ui.jsx";
+import { QUICK_PLACES, fieldLabel, placeName, searchPlaces } from "../weather.js";
 
 const STEPS = ["step1", "step2", "step3", "step4"];
 const PRESETS = {
@@ -11,13 +16,161 @@ const PRESETS = {
 };
 const PRIORITIES = ["soil_health", "water_saving", "climate_resilience", "profit"];
 
-export default function SetupPage({ step, go, form, setForm, crops, onSubmit, loading }) {
+// Water as three plain choices; each maps to seasonal irrigation in mm for the engine.
+const WATER = [
+  { id: "rain", mm: 0, icon: CloudRain },
+  { id: "some", mm: 300, icon: Droplet },
+  { id: "plenty", mm: 600, icon: Droplets },
+];
+const PRESET_ICONS = { balanced: Scale, soil: Sprout, water: Droplets, income: Wallet };
+
+// #/setup        -> the simple one-screen setup (place, water, what matters most)
+// #/setup/1..4   -> the full wizard ("More options")
+export default function SetupPage(props) {
+  return props.step ? <SetupWizard {...props} /> : <QuickSetup {...props} />;
+}
+
+function QuickSetup({ go, form, setForm, onSubmit, loading }) {
+  const { t, lang } = useI18n();
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    if (q.trim().length < 2) { setResults([]); return undefined; }
+    let alive = true;
+    const id = setTimeout(() => {
+      setBusy(true);
+      searchPlaces(q.trim(), lang).then((r) => alive && setResults(r)).catch(() => alive && setResults([]))
+        .finally(() => alive && setBusy(false));
+    }, 350);
+    return () => { alive = false; clearTimeout(id); };
+  }, [q, lang]);
+
+  const pick = (p) => {
+    setForm((f) => ({ ...f, lat: +(+p.lat).toFixed(4), lon: +(+p.lon).toFixed(4), place: p.name }));
+    setQ(""); setResults([]); setMsg("");
+  };
+  const useGps = () => {
+    if (!navigator.geolocation) { setMsg(t("gpsNone")); return; }
+    setMsg(t("gpsFinding"));
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const la = +pos.coords.latitude.toFixed(4), lo = +pos.coords.longitude.toFixed(4);
+      pick({ name: (await placeName(la, lo, lang)) || t("myLocation"), lat: la, lon: lo });
+    }, () => setMsg(t("gpsDenied")), { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 });
+  };
+
+  const water = WATER.reduce((a, b) => (Math.abs(b.mm - form.irrigation_mm) < Math.abs(a.mm - form.irrigation_mm) ? b : a));
+  const preset = Object.entries(PRESETS)
+    .find(([, w]) => PRIORITIES.every((k) => w[k] === form.weights[k]))?.[0];
+
+  return (
+    <div className="page page-narrow qs">
+      <PageHeader title={t("qs_title")} lead={t("qs_lead")} />
+
+      <form className="qs-form" onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+        {/* 1. Where */}
+        <section className="panel qs-section" aria-labelledby="qs-q1">
+          <h2 className="qs-q" id="qs-q1">{t("qs_q1")}</h2>
+          <div className="qs-place">
+            <span className="locpick-pin" aria-hidden="true"><MapPin size={20} /></span>
+            <div className="locpick-now">
+              <span className="locpick-k">{t("qs_fieldIn")}</span>
+              <strong><bdi>{fieldLabel(form, lang)}</bdi></strong>
+            </div>
+          </div>
+          <button type="button" className="locpick-gps" onClick={useGps}>
+            <LocateFixed size={20} aria-hidden="true" /> {t("useMyLocation")}
+          </button>
+          {msg && <p className="locpick-msg" role="status">{msg}</p>}
+          <label className="locpick-search">
+            <Search size={18} aria-hidden="true" />
+            <input type="search" value={q} onChange={(e) => setQ(e.target.value)}
+                   placeholder={t("searchPlace")} aria-label={t("searchPlace")} autoComplete="off" />
+          </label>
+          {busy && <p className="locpick-msg">{t("searching")}</p>}
+          {results.length > 0 && (
+            <ul className="locpick-results">
+              {results.map((r) => (
+                <li key={`${r.lat},${r.lon}`}>
+                  <button type="button" onClick={() => pick(r)}>
+                    <strong>{r.name}</strong>{r.area && <span>{r.area}</span>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {!busy && q.trim().length >= 2 && !results.length && <p className="locpick-msg">{t("noPlace")}</p>}
+          <p className="locpick-k">{t("quickPlaces")}</p>
+          <div className="locpick-quick">
+            {QUICK_PLACES.map((p) => (
+              <button key={p.name} type="button" className="chip"
+                      aria-pressed={Math.abs(p.lat - form.lat) < 0.02 && Math.abs(p.lon - form.lon) < 0.02}
+                      onClick={() => pick({ name: p.name, lat: p.lat, lon: p.lon })}>
+                {lang === "ur" ? p.ur : p.name}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* 2. Water */}
+        <section className="panel qs-section" aria-labelledby="qs-q2">
+          <h2 className="qs-q" id="qs-q2">{t("qs_q2")}</h2>
+          <div className="choice-grid choice-grid-3" role="group" aria-labelledby="qs-q2">
+            {WATER.map(({ id, mm, icon: Icon }) => (
+              <button key={id} type="button" className="choice" aria-pressed={water.id === id}
+                      onClick={() => setForm((f) => ({ ...f, irrigation_mm: mm }))}>
+                <Icon size={26} aria-hidden="true" />
+                <strong>{t(`water_${id}`)}</strong>
+                <span>{t(`water_${id}_d`)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* 3. What matters most */}
+        <section className="panel qs-section" aria-labelledby="qs-q3">
+          <h2 className="qs-q" id="qs-q3">{t("qs_q3")}</h2>
+          <div className="choice-grid" role="group" aria-labelledby="qs-q3">
+            {Object.keys(PRESETS).map((p) => {
+              const Icon = PRESET_ICONS[p];
+              return (
+                <button key={p} type="button" className="choice" aria-pressed={preset === p}
+                        onClick={() => setForm((f) => ({ ...f, weights: { ...PRESETS[p] } }))}>
+                  <Icon size={26} aria-hidden="true" />
+                  <strong>{t(`preset_${p}`)}</strong>
+                  <span>{t(`prio_${p}_d`)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <button type="submit" className="btn btn-primary qs-go" disabled={loading}>
+          <Search size={20} aria-hidden="true" />
+          <span>{loading ? t("qs_going") : t("qs_go")}</span>
+          <ArrowRight size={20} aria-hidden="true" className="flip-rtl" />
+        </button>
+        <p className="qs-defaults">{t("qs_defaults")}</p>
+        <button type="button" className="qs-more" onClick={() => go("setup/1")}>
+          <SlidersHorizontal size={16} aria-hidden="true" /> {t("qs_more")}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function SetupWizard({ step, go, form, setForm, crops, onSubmit, loading }) {
   const { t } = useI18n();
   const n = Math.min(Math.max(Number(step) || 1, 1), STEPS.length);
   const last = n === STEPS.length;
 
   return (
     <div className="page page-narrow">
+      <button type="button" className="qs-more qs-back" onClick={() => go("setup")}>
+        <ArrowLeft size={16} aria-hidden="true" className="flip-rtl" /> {t("qs_back")}
+      </button>
       <PageHeader title={t("setupTitle")} lead={t("setupLead")} />
 
       <ol className="stepper" aria-label={t("stepsLabel")}>
@@ -73,10 +226,11 @@ export default function SetupPage({ step, go, form, setForm, crops, onSubmit, lo
 
 function StepField({ form, setForm }) {
   const { t } = useI18n();
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  // Typing coordinates by hand clears the saved place name (it would no longer match).
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v, ...(k === "lat" || k === "lon" ? { place: "" } : {}) }));
   const locate = () =>
     navigator.geolocation?.getCurrentPosition(
-      (p) => setForm((f) => ({ ...f, lat: +p.coords.latitude.toFixed(4), lon: +p.coords.longitude.toFixed(4) })),
+      (p) => setForm((f) => ({ ...f, lat: +p.coords.latitude.toFixed(4), lon: +p.coords.longitude.toFixed(4), place: "" })),
       () => alert(t("locationBlocked"))
     );
   return (

@@ -84,6 +84,14 @@ export const QUICK_PLACES = [
   { name: "Gujranwala", ur: "گوجرانوالہ", lat: 32.16, lon: 74.19 },
 ];
 
+// The place name to show for a field: a known district in the current language,
+// else the saved name, else the coordinates.
+export function fieldLabel(form, lang) {
+  const q = QUICK_PLACES.find((p) => Math.abs(p.lat - form.lat) < 0.02 && Math.abs(p.lon - form.lon) < 0.02);
+  if (q) return lang === "ur" ? q.ur : q.name;
+  return form.place || `${(+form.lat).toFixed(2)}, ${(+form.lon).toFixed(2)}`;
+}
+
 // Pick the scenario that matches this week's real weather: the 7-day forecast plus
 // the last two weeks of NASA POWER. Returns the scenario and why it was chosen.
 export function autoScenario(fc, nasaDays = []) {

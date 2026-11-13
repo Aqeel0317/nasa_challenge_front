@@ -32,7 +32,7 @@ export default function PlansPage({ result, selected, setSelected, go }) {
         title={t("plansTitle")}
         lead={t("plansLead")}
         actions={<>
-          <Button icon={Pencil} onClick={() => go("setup/1")}>{t("editInputs")}</Button>
+          <Button icon={Pencil} onClick={() => go("setup")}>{t("editInputs")}</Button>
           <Button icon={Download} disabled={!plans.length}
                   onClick={() => download("rotation_plan.csv", toCsv(plans), "text/csv")}>CSV</Button>
           <Button icon={FileJson} variant="ghost"
