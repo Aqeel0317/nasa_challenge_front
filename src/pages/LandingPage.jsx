@@ -4,6 +4,7 @@ import { useI18n } from "../i18n.jsx";
 import Brand from "../components/Brand.jsx";
 import LanguageSwitch from "../components/LanguageSwitch.jsx";
 import FarmScene from "../components/landing/FarmScene.jsx";
+import HeroField from "../components/landing/HeroField.jsx";
 import { warmUp } from "../farmCache.js";
 
 // Landing page told as one farm year you scroll through: a cinematic hero, a pinned
@@ -330,7 +331,6 @@ export default function LandingPage({ onStart }) {
 
       {/* ---------------- hero ---------------- */}
       <section className="lx-hero">
-        <div className="lx-sun" aria-hidden="true" />
         <Fireflies />
         <svg className="lx-wheat" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
           {Array.from({ length: 70 }, (_, i) => {
@@ -360,6 +360,7 @@ export default function LandingPage({ onStart }) {
             <a className="lx-ghost" href="#year" onClick={jump("year")}>{t("lx_scroll")}</a>
           </div>
         </div>
+        <HeroField />
         <a className="lx-scrollcue" href="#year" onClick={jump("year")} aria-label={t("lx_scroll")}><ChevronDown size={28} aria-hidden="true" /></a>
       </section>
 

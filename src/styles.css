@@ -1518,3 +1518,96 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
 }
 
 .start-page .start-name { margin: -.2rem 0 -.2rem; line-height: 1.9; }
+
+/* ==========================================================================
+   Hero v2: fields seen from orbit, a scanning satellite, live NASA cards
+   ========================================================================== */
+.lx-hero { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(1rem, 3vw, 3rem);
+  background: radial-gradient(60% 70% at 78% 45%, #0f3a22 0%, #072014 50%, var(--night) 85%); }
+.lx-sun { display: none; }
+.lx-hero-copy { grid-column: 1; }
+.hf { position: relative; z-index: 1; grid-column: 2; inline-size: 100%; aspect-ratio: 1 / .92; max-inline-size: 640px; justify-self: center; }
+
+.hf-aurora { position: absolute; inset: -12%; pointer-events: none;
+  background: radial-gradient(40% 35% at 50% 58%, rgba(95, 211, 138, .30), transparent 70%),
+              radial-gradient(30% 25% at 30% 30%, rgba(200, 245, 106, .14), transparent 70%),
+              radial-gradient(35% 30% at 75% 75%, rgba(60, 160, 200, .14), transparent 70%); }
+
+/* the fields */
+.hf-stage { position: absolute; inset: 14% 4% 6%; display: grid; place-items: center; perspective: 1200px; animation: hf-float 7s ease-in-out infinite; }
+.hf-ground { position: relative; inline-size: 74%; aspect-ratio: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 5%; padding: 5%;
+  border-radius: 18px; background: #4a3a22; transform: rotateX(58deg) rotateZ(-38deg); transform-style: preserve-3d;
+  box-shadow: 0 0 0 2px rgba(200, 245, 106, .28), 0 0 60px rgba(95, 211, 138, .25), 0 60px 80px -20px rgba(0, 0, 0, .7); }
+.hf-plot { position: relative; border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+.hf-plot i { position: absolute; inset: 0; background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, .18) 50%, transparent 70%); transform: translateX(-100%); animation: hf-glint 6s ease-in-out infinite; }
+.hf-wheat { background: repeating-linear-gradient(90deg, #e2bd4f 0 7px, #c9a23a 7px 12px); }
+.hf-cotton { background: radial-gradient(circle, #fff 0 2px, transparent 2.6px) 0 0 / 12px 12px, repeating-linear-gradient(90deg, #3f8a3a 0 8px, #326f2e 8px 13px); }
+.hf-rice { background: repeating-linear-gradient(90deg, #5fae7a 0 5px, #4c95a8 5px 9px); }
+.hf-mustard { background: repeating-linear-gradient(90deg, #f0d03f 0 7px, #d8b42a 7px 12px); }
+.hf-cotton i { animation-delay: 1.5s; } .hf-rice i { animation-delay: 3s; } .hf-mustard i { animation-delay: 4.5s; }
+.hf-canal { position: absolute; background: linear-gradient(90deg, #4fa0d0, #7cc7ef); opacity: .9; border-radius: 2px; }
+.hf-canal-x { inset-inline: 5%; top: calc(50% - 1.5px); block-size: 3px; }
+.hf-canal-y { inset-block: 5%; left: calc(50% - 1.5px); inline-size: 3px; background: linear-gradient(180deg, #4fa0d0, #7cc7ef); }
+.hf-scan { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; }
+.hf-scan::before { content: ""; position: absolute; inset-block: 0; inline-size: 26%; left: 0;
+  background: linear-gradient(90deg, transparent, rgba(200, 245, 106, .55), rgba(255, 255, 255, .7), rgba(200, 245, 106, .55), transparent);
+  transform: translateX(-120%); animation: hf-scan 4.2s cubic-bezier(.45, 0, .55, 1) infinite; }
+
+/* the satellite */
+.hf-sat { position: absolute; top: 0; left: 50%; translate: -50% 0; display: grid; justify-items: center; animation: hf-bob 5s ease-in-out infinite; }
+.hf-sat svg { filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .5)); }
+.hf-beam { inline-size: 190px; block-size: 170px; margin-top: -6px; clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgba(200, 245, 106, .38), rgba(200, 245, 106, 0)); animation: hf-beam 4.2s ease-in-out infinite; }
+.hf-blink { animation: hf-blink 1.4s steps(2, end) infinite; }
+
+/* live data cards */
+.hf-chips { position: absolute; inset: 0; pointer-events: none; }
+.hf-chip, .hf-live, .hf-place { position: absolute; border-radius: 14px; color: #eef7ea; background: rgba(6, 26, 15, .82);
+  border: 1px solid rgba(200, 245, 106, .22); box-shadow: 0 14px 30px -14px rgba(0, 0, 0, .7); }
+.hf-chip { display: grid; grid-template-columns: auto auto; column-gap: .45rem; align-items: center; padding: .55rem .8rem; animation: hf-chip 6s ease-in-out infinite; }
+.hf-ic { grid-row: span 2; font-size: 1.35rem; }
+.hf-val { font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif; font-size: 1.45rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.hf-lbl { font-size: .72rem; color: #a9c4b1; }
+.hf-chip.is-alert .hf-val { color: #ffb08f; }
+.hf-chip-1 { top: 26%; inset-inline-start: -2%; }
+.hf-chip-2 { top: 44%; inset-inline-end: -3%; animation-delay: -2s; }
+.hf-chip-3 { bottom: 8%; inset-inline-start: 6%; animation-delay: -4s; }
+.hf-live { top: 3%; inset-inline-start: 0; display: inline-flex; align-items: center; gap: .45rem; padding: .35rem .7rem; font-size: .75rem; font-weight: 700; letter-spacing: .04em; color: #c8f56a; }
+.hf-place { bottom: 0; inset-inline-end: 4%; padding: .3rem .7rem; font-size: .75rem; color: #a9c4b1; }
+.hf-dot { inline-size: .5rem; block-size: .5rem; border-radius: 50%; background: #ff4d3d; animation: live-ping 1.6s infinite; }
+
+@keyframes hf-float { 50% { transform: translateY(-10px); } }
+@keyframes hf-bob { 50% { transform: translateY(8px); } }
+@keyframes hf-scan { 0% { transform: translateX(-120%); } 60%, 100% { transform: translateX(420%); } }
+@keyframes hf-beam { 0%, 100% { opacity: .55; } 30% { opacity: 1; } }
+@keyframes hf-glint { 0%, 70% { transform: translateX(-100%); } 85%, 100% { transform: translateX(100%); } }
+@keyframes hf-chip { 50% { transform: translateY(-7px); } }
+@keyframes hf-blink { 50% { opacity: 0; } }
+
+@media (max-width: 1000px) {
+  .lx-hero { grid-template-columns: minmax(0, 1fr); }
+  .hf { grid-column: 1; max-inline-size: 520px; }
+}
+@media (max-width: 760px) {
+  .lx-hero { padding-bottom: 5rem; }
+  .hf { aspect-ratio: 1 / .95; margin-top: .5rem; }
+  .hf-chip { padding: .4rem .6rem; }
+  .hf-val { font-size: 1.15rem; }
+  .hf-ic { font-size: 1.1rem; }
+  .hf-lbl { font-size: .66rem; }
+  .hf-chip-1 { inset-inline-start: 0; }
+  .hf-chip-2 { inset-inline-end: 0; }
+  .hf-beam { inline-size: 140px; block-size: 120px; }
+  .hf-sat svg { inline-size: 90px; block-size: 52px; }
+  .hf-stage { animation: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hf *, .hf-stage { animation: none !important; }
+}
+.lx-title { font-size: clamp(2.4rem, 5.2vw, 4.6rem); }
+@media (max-width: 760px) {
+  .lx-title { font-size: clamp(2.2rem, 10.5vw, 3rem); }
+  .hf-live { top: auto; bottom: 0; }
+  .hf-place { display: none; }
+  .hf-chip-3 { bottom: 13%; }
+}

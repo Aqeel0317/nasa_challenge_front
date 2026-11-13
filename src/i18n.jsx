@@ -563,6 +563,11 @@ const STRINGS = {
     live_km: "{km} km away",
     refreshing: "Updating with NASA data…",
     staleNote: "Showing your last result while we update it…",
+    hero_live: "Live · NASA POWER",
+    hero_temp: "Max temperature",
+    hero_soil: "Root-zone soil moisture",
+    hero_rain: "Rain, last 14 days",
+    hero_place: "Field near Faisalabad",
   },
   ur: {
     lm_weather: "ناسا کا دس سالہ موسمی ڈیٹا پڑھا جا رہا ہے",
@@ -1125,6 +1130,11 @@ const STRINGS = {
     live_km: "{km} کلومیٹر دور",
     refreshing: "ناسا ڈیٹا سے تازہ کیا جا رہا ہے…",
     staleNote: "تازہ کرنے تک آپ کا پچھلا نتیجہ دکھایا جا رہا ہے…",
+    hero_live: "براہِ راست · ناسا پاور",
+    hero_temp: "زیادہ سے زیادہ درجہ حرارت",
+    hero_soil: "جڑوں والی مٹی کی نمی",
+    hero_rain: "بارش، پچھلے 14 دن",
+    hero_place: "فیصل آباد کے قریب کھیت",
   },
 };
 

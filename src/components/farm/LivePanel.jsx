@@ -16,8 +16,8 @@ function readLive(lat, lon) {
   try { return JSON.parse(localStorage.getItem(storeKey(lat, lon)) || "null"); } catch { return null; }
 }
 
-export default function LivePanel({ lat, lon }) {
-  const { t, lang } = useI18n();
+// Latest NASA data for a place: the saved copy at once, then a fresh one if it is old.
+export function useLive(lat, lon) {
   const [live, setLive] = useState(() => readLive(lat, lon));
   const [failed, setFailed] = useState(false);
 
@@ -37,6 +37,12 @@ export default function LivePanel({ lat, lon }) {
     }, 300);
     return () => { alive = false; clearTimeout(timer); };
   }, [lat, lon]);
+  return { live, failed };
+}
+
+export default function LivePanel({ lat, lon }) {
+  const { t, lang } = useI18n();
+  const { live, failed } = useLive(lat, lon);
 
   const locale = lang === "ur" ? "ur-PK" : "en-GB";
   const fmt = (iso, o = { day: "numeric", month: "short" }) => new Date(`${iso}T00:00:00`).toLocaleDateString(locale, o);
