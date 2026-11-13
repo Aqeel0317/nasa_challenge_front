@@ -35,18 +35,24 @@ function useReveal() {
   return ref;
 }
 
-// 0..1 progress through a tall section while its sticky child is pinned.
-function useScrollProgress(ref) {
-  const [p, setP] = useState(0);
+// Scroll position inside the tall story section. It writes the 0..1 progress straight
+// into a CSS variable and the year bar (no React render per frame) and only tells
+// React when the chapter changes.
+function useStory(sectionRef, pinRef, barRef, count) {
+  const [idx, setIdx] = useState(0);
   useEffect(() => {
-    let raf = 0;
+    let raf = 0, last = -1;
     const update = () => {
       raf = 0;
-      const el = ref.current;
+      const el = sectionRef.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
       const total = r.height - window.innerHeight;
-      setP(Math.max(0, Math.min(1, -r.top / Math.max(1, total))));
+      const p = Math.max(0, Math.min(1, -r.top / Math.max(1, total)));
+      pinRef.current?.style.setProperty("--p", p.toFixed(4));
+      if (barRef.current) barRef.current.style.transform = `scaleX(${p.toFixed(4)})`;
+      const i = Math.min(count - 1, Math.floor(p * count));
+      if (i !== last) { last = i; setIdx(i); }
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     update();
@@ -57,30 +63,47 @@ function useScrollProgress(ref) {
       window.removeEventListener("resize", onScroll);
       cancelAnimationFrame(raf);
     };
-  }, [ref]);
-  return p;
+  }, [sectionRef, pinRef, barRef, count]);
+  return idx;
 }
 
-// ---------- glowing embers drifting up, pushed aside by the pointer ----------
-function Embers({ density = 1 }) {
+// ---------- fireflies drifting over the field, nudged aside by the pointer ----------
+// Each glow is one pre-drawn sprite copied with drawImage, which is cheap even on
+// low-end phones; fewer fireflies on small screens, none when motion is reduced.
+function makeSprite() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d");
+  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, "rgba(236,255,190,1)");
+  grad.addColorStop(0.25, "rgba(190,240,120,.75)");
+  grad.addColorStop(1, "rgba(120,220,120,0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+  return c;
+}
+
+function Fireflies({ density = 1 }) {
   const ref = useRef(null);
   useEffect(() => {
+    if (still()) return undefined;
     const canvas = ref.current;
     const ctx = canvas.getContext("2d");
+    const sprite = makeSprite();
     let w = 0, h = 0, raf = 0, visible = true;
     const mouse = { x: -999, y: -999 };
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     const parts = [];
     const spawn = (anywhere) => ({
       x: Math.random() * w, y: anywhere ? Math.random() * h : h + 10,
-      r: 0.6 + Math.random() * 2.4, vy: 0.25 + Math.random() * 0.9, vx: (Math.random() - 0.5) * 0.3,
-      life: Math.random() * Math.PI * 2, hue: 18 + Math.random() * 28,
+      s: 6 + Math.random() * 14, vy: 0.15 + Math.random() * 0.55, vx: (Math.random() - 0.5) * 0.3,
+      life: Math.random() * Math.PI * 2, blink: 0.6 + Math.random() * 1.4,
     });
     const resize = () => {
       w = canvas.clientWidth; h = canvas.clientHeight;
-      canvas.width = w * dpr; canvas.height = h * dpr;
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const n = Math.round(Math.min(150, (w * h) / 9000) * density);
+      const n = Math.round(Math.min(w < 700 ? 34 : 80, (w * h) / 14000) * density);
       parts.length = 0;
       for (let i = 0; i < n; i += 1) parts.push(spawn(true));
     };
@@ -89,40 +112,36 @@ function Embers({ density = 1 }) {
       ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = "lighter";
       for (const p of parts) {
-        p.life += 0.03;
+        p.life += 0.02 * p.blink;
         const dx = p.x - mouse.x, dy = p.y - mouse.y;
-        if (dx * dx + dy * dy < 14000) { p.vx += dx / 4000; p.vy -= dy / 9000; }
-        p.vx *= 0.98;
-        p.vy = Math.max(0.15, Math.min(2.5, p.vy));
-        p.x += p.vx + Math.sin(p.life) * 0.25;
-        p.y -= p.vy;
-        if (p.y < -10 || p.x < -20 || p.x > w + 20) Object.assign(p, spawn(false));
-        const a = 0.35 + 0.35 * Math.sin(p.life * 1.7);
-        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
-        g.addColorStop(0, `hsla(${p.hue}, 100%, 70%, ${a})`);
-        g.addColorStop(1, `hsla(${p.hue}, 100%, 50%, 0)`);
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2); ctx.fill();
+        if (dx * dx + dy * dy < 12000) { p.vx += dx / 5000; p.vy += 0.02; }
+        p.vx *= 0.97;
+        p.x += p.vx + Math.sin(p.life) * 0.35;
+        p.y -= Math.min(p.vy, 1.6);
+        if (p.y < -20 || p.x < -30 || p.x > w + 30) Object.assign(p, spawn(false));
+        ctx.globalAlpha = 0.25 + 0.75 * Math.max(0, Math.sin(p.life));
+        ctx.drawImage(sprite, p.x - p.s / 2, p.y - p.s / 2, p.s, p.s);
       }
-      if (visible && !still()) raf = requestAnimationFrame(draw);
+      ctx.globalAlpha = 1;
+      if (visible && !document.hidden) raf = requestAnimationFrame(draw);
     };
     const onMove = (e) => {
       const r = canvas.getBoundingClientRect();
       mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
     };
-    const io = new IntersectionObserver(([e]) => {
-      visible = e.isIntersecting;
-      if (visible && !raf) raf = requestAnimationFrame(draw);
-    });
+    const wake = () => { if (visible && !document.hidden && !raf) raf = requestAnimationFrame(draw); };
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; wake(); });
     resize();
     draw();
     io.observe(canvas);
     window.addEventListener("resize", resize);
     window.addEventListener("pointermove", onMove, { passive: true });
+    document.addEventListener("visibilitychange", wake);
     return () => {
       cancelAnimationFrame(raf); io.disconnect();
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onMove);
+      document.removeEventListener("visibilitychange", wake);
     };
   }, [density]);
   return <canvas ref={ref} className="lx-embers" aria-hidden="true" />;
@@ -220,15 +239,16 @@ const CHAPTERS = [
 function YearStory({ onStart }) {
   const { t, lang } = useI18n();
   const ref = useRef(null);
-  const p = useScrollProgress(ref);
-  const idx = Math.min(CHAPTERS.length - 1, Math.floor(p * CHAPTERS.length));
+  const pinRef = useRef(null);
+  const barRef = useRef(null);
+  const idx = useStory(ref, pinRef, barRef, CHAPTERS.length);
   const ch = CHAPTERS[idx];
   const months = Array.from({ length: 12 }, (_, i) =>
     new Date(2024, 4 + i, 1).toLocaleDateString(lang === "ur" ? "ur-PK" : "en-GB", { month: "short" }));
   return (
     <section ref={ref} id="year" className="lx-story" style={{ height: `${CHAPTERS.length * 100 + 40}vh` }}
              aria-label={t("lx_storyLabel")}>
-      <div className={`lx-pin lx-mood-${ch.mood} ${ch.key === "end" ? "is-end" : ""}`} style={{ "--p": p }}>
+      <div ref={pinRef} className={`lx-pin lx-mood-${ch.mood} ${ch.key === "end" ? "is-end" : ""}`}>
         <div className="lx-scene"><FarmScene label={t("lp_sceneLabel")} mood={ch.mood} /></div>
         <div className="lx-vignette" aria-hidden="true" />
         <div className="lx-chapter" key={ch.key}>
@@ -243,7 +263,7 @@ function YearStory({ onStart }) {
           )}
         </div>
         <div className="lx-year" aria-hidden="true" dir="ltr">
-          <div className="lx-year-bar"><i style={{ inlineSize: `${Math.round(p * 100)}%` }} /></div>
+          <div className="lx-year-bar"><i ref={barRef} /></div>
           <div className="lx-year-months">
             {months.map((m, i) => <span key={i} className={i <= ch.month ? "on" : ""}>{m}</span>)}
           </div>
@@ -266,8 +286,11 @@ export default function LandingPage({ onStart }) {
   const dataRef = useReveal();
   const finalRef = useReveal();
 
-  // Wake the free-tier server and get the farmer's last farm ready while they read.
+  // Wake the free-tier server, get the farmer's last farm ready, and download the
+  // app pages in the background while they read.
   useEffect(() => {
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 2500));
+    idle(() => { import("./StartPage.jsx"); import("./SetupPage.jsx"); import("./FarmPage.jsx"); });
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem("aapkakhet-farm-v2") || "null"); } catch { /* blocked */ }
     const id = setTimeout(() => warmUp(saved), 1200);
@@ -308,7 +331,7 @@ export default function LandingPage({ onStart }) {
       {/* ---------------- hero ---------------- */}
       <section className="lx-hero">
         <div className="lx-sun" aria-hidden="true" />
-        <Embers />
+        <Fireflies />
         <svg className="lx-wheat" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
           {Array.from({ length: 70 }, (_, i) => {
             const x = i * 17.4 + ((i * 37) % 9), hh = 90 + ((i * 53) % 70);
@@ -404,7 +427,7 @@ export default function LandingPage({ onStart }) {
 
       {/* ---------------- last call ---------------- */}
       <section className="lx-final" ref={finalRef}>
-        <Embers density={0.6} />
+        <Fireflies density={0.6} />
         <h2 className="lx-reveal" data-reveal>{t("lp_finalTitle")}</h2>
         <p className="lx-reveal" data-reveal>{t("lx_finalSub")}</p>
         <button type="button" className="lx-cta lx-cta-xl lx-reveal" data-reveal onClick={onStart}>

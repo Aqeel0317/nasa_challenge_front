@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { AlertTriangle, Layers, RotateCw } from "lucide-react";
 import { getCrops, getRotations } from "./api.js";
 import { useI18n } from "./i18n.jsx";
@@ -7,14 +7,18 @@ import useStoredState from "./hooks/useStoredState.js";
 import AppShell from "./components/AppShell.jsx";
 import { Button, EmptyState } from "./components/ui.jsx";
 import BrandLoader from "./components/BrandLoader.jsx";
-import SetupPage from "./pages/SetupPage.jsx";
-import PlansPage from "./pages/PlansPage.jsx";
-import FieldPage from "./pages/FieldPage.jsx";
-import CropsPage from "./pages/CropsPage.jsx";
-import SoilPage from "./pages/SoilPage.jsx";
-import FarmPage from "./pages/FarmPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
-import StartPage from "./pages/StartPage.jsx";
+
+// Everything after the landing page loads on demand, so the first visit only
+// downloads the landing page (charts and the 3D farm come later, when needed).
+const SetupPage = lazy(() => import("./pages/SetupPage.jsx"));
+const PlansPage = lazy(() => import("./pages/PlansPage.jsx"));
+const FieldPage = lazy(() => import("./pages/FieldPage.jsx"));
+const CropsPage = lazy(() => import("./pages/CropsPage.jsx"));
+const SoilPage = lazy(() => import("./pages/SoilPage.jsx"));
+const FarmPage = lazy(() => import("./pages/FarmPage.jsx"));
+const StartPage = lazy(() => import("./pages/StartPage.jsx"));
+
 
 const DEFAULT_FORM = {
   lat: 41.6,
@@ -71,7 +75,7 @@ export default function App() {
   const openApp = useCallback(() => go("setup/1", { replace: true }), [go]);
   // The landing and loading pages sit outside the app shell.
   if (page === "home") return <LandingPage onStart={() => go("start")} />;
-  if (page === "start") return <StartPage onDone={openApp} />;
+  if (page === "start") return <Suspense fallback={<BrandLoader />}><StartPage onDone={openApp} /></Suspense>;
 
   const safeForm = { ...form, allowed_crops: form.allowed_crops || [] };
   let content;
@@ -107,7 +111,7 @@ export default function App() {
   return (
     <AppShell page={page === "setup" ? "setup" : page} go={go} hasResult={!!result} form={form}>
       {error && page === "setup" && <div className="notice notice-top">{error}</div>}
-      {content}
+      <Suspense fallback={<div className="page"><BrandLoader /></div>}>{content}</Suspense>
     </AppShell>
   );
 }

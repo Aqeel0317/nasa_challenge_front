@@ -26,9 +26,9 @@ export const DEFAULT_FIELDS = [
 
 // Picture for each crop, so a farmer can find it without reading.
 export const CROP_ICON = {
-  cotton: "☁️", rice: "🍚", maize: "🌽", sorghum: "🌾", pearl_millet: "🌾", mung_bean: "🫘",
-  soybean: "🫘", guar: "🫛", sunflower: "🌻", sesbania: "🌿", wheat: "🌾", barley: "🌾",
-  oats: "🌱", mustard: "🌼", chickpea: "🫘", lentil: "🫘", berseem: "☘️", potato: "🥔",
+  cotton: "☁️", rice: "🍚", maize: "🌽", sorghum: "🌾", pearl_millet: "🌾", mung_bean: "🌱",
+  soybean: "🌱", guar: "🌿", sunflower: "🌻", sesbania: "🌿", wheat: "🌾", barley: "🌾",
+  oats: "🌱", mustard: "🌼", chickpea: "🟡", lentil: "🟠", berseem: "☘️", potato: "🥔",
 };
 // Legumes fix nitrogen from the air and leave the soil richer for the next crop.
 export const NITROGEN_FIXERS = new Set(["mung_bean", "soybean", "guar", "sesbania", "chickpea", "lentil", "berseem"]);
