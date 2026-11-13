@@ -56,7 +56,7 @@ export default function FarmScene({ label, mood = "normal" }) {
       <rect className="tint tint-heat" width="1200" height="600" fill="url(#heatSky)" />
       <rect className="tint tint-storm" width="1200" height="600" fill="#4e5a63" />
       <circle cx="930" cy="150" r="130" fill="url(#sunGlow)" className="sun-glow" />
-      <circle cx="930" cy="150" r="50" fill="#f8c94d" />
+      <circle className="sun" cx="930" cy="150" r="50" fill="#f8c94d" />
       <g className="cloud cloud-a" fill="#fff" opacity=".9">
         <ellipse cx="180" cy="95" rx="60" ry="18" /><ellipse cx="215" cy="82" rx="38" ry="20" /><ellipse cx="150" cy="86" rx="30" ry="15" />
       </g>
