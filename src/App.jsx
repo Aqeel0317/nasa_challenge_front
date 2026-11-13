@@ -18,6 +18,7 @@ const CropsPage = lazy(() => import("./pages/CropsPage.jsx"));
 const SoilPage = lazy(() => import("./pages/SoilPage.jsx"));
 const FarmPage = lazy(() => import("./pages/FarmPage.jsx"));
 const StartPage = lazy(() => import("./pages/StartPage.jsx"));
+const TourPage = lazy(() => import("./pages/TourPage.jsx"));
 
 
 const DEFAULT_FORM = {
@@ -76,6 +77,7 @@ export default function App() {
   const openApp = useCallback(() => go("setup", { replace: true }), [go]);
   // The landing and loading pages sit outside the app shell.
   if (page === "home") return <LandingPage onStart={() => go("start")} />;
+  if (page === "tour") return <Suspense fallback={<BrandLoader />}><TourPage onExit={() => go("")} /></Suspense>;
   if (page === "start") return <Suspense fallback={<BrandLoader />}><StartPage onDone={openApp} /></Suspense>;
 
   const safeForm = { ...form, allowed_crops: form.allowed_crops || [] };

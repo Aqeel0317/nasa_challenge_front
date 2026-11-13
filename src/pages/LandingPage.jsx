@@ -357,6 +357,7 @@ export default function LandingPage({ onStart }) {
             <button type="button" className="lx-cta" onClick={onStart}>
               <span>{t("lp_cta")}</span><ArrowRight size={20} aria-hidden="true" className="flip-rtl" />
             </button>
+            <a className="lx-ghost" href="#/tour">▶ {t("tour_cta")}</a>
             <a className="lx-ghost" href="#year" onClick={jump("year")}>{t("lx_scroll")}</a>
           </div>
         </div>

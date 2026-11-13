@@ -1761,3 +1761,138 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
   .choice-grid-3 .choice svg { grid-row: span 2; align-self: center; margin: 0; }
   .choice { min-height: 104px; padding: .85rem .6rem; }
 }
+
+/* ==========================================================================
+   60-second tour (#/tour): full-screen scenes, readable captions, CSS effects
+   ========================================================================== */
+.tour { position: fixed; inset: 0; z-index: 100; overflow: hidden; color: #eef7ea; background: #03100a; font-family: "IBM Plex Sans", system-ui, sans-serif; }
+.tour.is-paused *, .tour.is-paused *::before, .tour.is-paused *::after { animation-play-state: paused !important; }
+.tour-stage { position: absolute; inset: 0; animation: ts-in .8s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes ts-in { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: none; } }
+.ts { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 1rem; padding: 2rem 2rem 6rem; text-align: center; }
+.ts > *:not(.ts-bg):not(.ts-shade):not(.ts-stars):not(.ts-rain):not(.ts-flash) { animation: ts-up .9s cubic-bezier(.2, .8, .2, 1) both; }
+.ts > :nth-child(2) { animation-delay: .15s !important; } .ts > :nth-child(3) { animation-delay: .3s !important; }
+.ts > :nth-child(4) { animation-delay: .45s !important; } .ts > :nth-child(5) { animation-delay: .6s !important; } .ts > :nth-child(6) { animation-delay: .75s !important; }
+@keyframes ts-up { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+
+.ts-kicker { font-size: clamp(.85rem, 1.4vw, 1.05rem); font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #c8f56a; }
+.ts-big { font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif; font-size: clamp(2.8rem, 8vw, 6.5rem); font-weight: 700; line-height: 1; letter-spacing: -.02em;
+  background: linear-gradient(90deg, #f2ffc4, #c8f56a 40%, #5fd38a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ts-h { font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif; font-size: clamp(1.7rem, 4vw, 3.2rem); font-weight: 700; line-height: 1.12; max-inline-size: 22ch; }
+[dir="rtl"] .ts-h, [dir="rtl"] .ts-cap { font-family: "Noto Nastaliq Urdu", serif; line-height: 1.9; }
+.ts-cap { font-size: clamp(1.05rem, 2vw, 1.5rem); color: #d9ead9; max-inline-size: 40ch; line-height: 1.45; }
+.ts-tag, .ts-src { font-size: .9rem; color: #8fb09a; letter-spacing: .04em; }
+.ts-urdu { font-family: "Noto Nastaliq Urdu", serif; font-size: clamp(2rem, 5vw, 3.4rem); color: #c8f56a; line-height: 1.8; text-shadow: 0 0 30px rgba(200, 245, 106, .4); margin-bottom: -1rem; }
+
+/* title / close */
+.ts-title { background: radial-gradient(55% 55% at 50% 45%, #14462a 0%, #08200f 50%, #03100a 85%); }
+.ts-title .grow-mark { color: #8fe0a2; }
+.ts-stars { position: absolute; inset: 0; opacity: .8;
+  background-image: radial-gradient(2px 2px at 12% 22%, #c8f56a, transparent), radial-gradient(2px 2px at 82% 30%, #c8f56a, transparent),
+    radial-gradient(1.5px 1.5px at 30% 75%, #eaffb0, transparent), radial-gradient(2px 2px at 68% 82%, #c8f56a, transparent),
+    radial-gradient(1.5px 1.5px at 50% 12%, #eaffb0, transparent), radial-gradient(2px 2px at 90% 65%, #c8f56a, transparent),
+    radial-gradient(1.5px 1.5px at 6% 60%, #eaffb0, transparent), radial-gradient(2px 2px at 40% 40%, #c8f56a, transparent);
+  animation: ts-drift 12s linear infinite; }
+@keyframes ts-drift { from { transform: translateY(0); } to { transform: translateY(-60px); } }
+.ts-url { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: clamp(.95rem, 2vw, 1.4rem); padding: .6rem 1.2rem; border-radius: 999px; background: rgba(200, 245, 106, .1); border: 1px solid rgba(200, 245, 106, .35); color: #eaffb0; }
+
+/* problem */
+.ts-problem { background: radial-gradient(70% 70% at 50% 30%, #3a1410 0%, #1b0b09 60%, #0b0606 100%); }
+.ts-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 4vw, 4rem); }
+.ts-stats div { display: grid; gap: .3rem; }
+.ts-stats strong { font-family: "IBM Plex Sans Condensed", sans-serif; font-size: clamp(2.6rem, 7vw, 5.5rem); line-height: 1; font-variant-numeric: tabular-nums;
+  background: linear-gradient(90deg, #ffd27a, #ff6a3d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ts-stats span { color: #e9c9b8; font-size: clamp(.95rem, 1.6vw, 1.2rem); }
+.ts-rain { position: absolute; inset: -20% 0 0; opacity: .35;
+  background-image: repeating-linear-gradient(105deg, transparent 0 18px, rgba(220, 235, 245, .5) 18px 19px);
+  background-size: 200px 200px; animation: ts-rain .5s linear infinite; }
+@keyframes ts-rain { to { background-position: -40px 200px; } }
+.ts-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; animation: ts-flash 4s 1s infinite; }
+.ts-flash-once { animation: ts-flash-once .9s both; }
+@keyframes ts-flash { 0%, 6%, 100% { opacity: 0; } 2% { opacity: .7; } 4% { opacity: .15; } 5% { opacity: .5; } }
+@keyframes ts-flash-once { 0% { opacity: .85; } 100% { opacity: 0; } }
+
+/* scenes over the farm illustration */
+.ts-scene { place-content: end start; justify-items: start; text-align: start; padding: 2rem clamp(1.5rem, 6vw, 5rem) 7rem; }
+.ts-bg { position: absolute; inset: 0; animation: ts-kenburns 9s ease-out both; }
+.ts-bg .farm-scene { inline-size: 100%; block-size: 100%; }
+.ts-zoom { animation: ts-kenburns 7s ease-out both; }
+@keyframes ts-kenburns { from { transform: scale(1.02); } to { transform: scale(1.14) translate(-1%, 1%); } }
+.ts-shade { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(3, 12, 8, .92) 0%, rgba(3, 12, 8, .55) 42%, transparent 72%); }
+.ts-copy { position: relative; z-index: 2; display: grid; gap: .8rem; justify-items: start; text-align: start; max-inline-size: min(900px, 92vw); }
+.ts-scene .ts-copy > * { animation: ts-up .9s cubic-bezier(.2, .8, .2, 1) both; }
+.ts-copy > :nth-child(2) { animation-delay: .2s !important; } .ts-copy > :nth-child(3) { animation-delay: .4s !important; }
+.ts-mega { font-family: "IBM Plex Sans Condensed", sans-serif; font-size: clamp(2.4rem, 7vw, 5.6rem); font-weight: 700; line-height: 1.02;
+  background: linear-gradient(180deg, #fff, #ffcf9e 55%, #ff7a3d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ts-shock-flood .ts-mega { background-image: linear-gradient(180deg, #fff, #bfe0f5 55%, #5aa0d0); }
+.ts-shock-heatwave .ts-shade { background: linear-gradient(0deg, rgba(40, 8, 2, .92) 0%, rgba(60, 14, 4, .5) 45%, transparent 75%); }
+
+/* nasa */
+.ts-nasa { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); place-content: center; align-items: center; gap: 2rem; padding-inline: clamp(1rem, 5vw, 4rem);
+  background: radial-gradient(60% 70% at 30% 45%, #0f3a22 0%, #072014 50%, #03100a 85%); text-align: start; }
+.ts-nasa-art { inline-size: min(100%, 560px); justify-self: center; }
+.ts-nasa .ts-copy { justify-items: start; }
+.ts-sources { display: grid; gap: .5rem; list-style: none; margin: .4rem 0 0; padding: 0; }
+.ts-sources li { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; padding: .6rem .9rem; border-radius: 12px; background: rgba(200, 245, 106, .07); border: 1px solid rgba(200, 245, 106, .2); font-size: clamp(.95rem, 1.5vw, 1.15rem);
+  opacity: 0; animation: ts-slide .6s cubic-bezier(.2, .8, .2, 1) both; }
+.ts-sources strong { color: #c8f56a; }
+.ts-sources span { color: #cfe5d4; }
+@keyframes ts-slide { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+[dir="rtl"] .ts-sources li { animation-name: ts-slide-rtl; }
+@keyframes ts-slide-rtl { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: none; } }
+
+/* year bar */
+.ts-year { position: absolute; z-index: 3; inset-inline: clamp(1.5rem, 6vw, 5rem); bottom: 4.6rem; display: grid; gap: .4rem; }
+.ts-year-bar { block-size: 6px; border-radius: 6px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+.ts-year-bar i { display: block; block-size: 100%; inline-size: 100%; transform-origin: left; background: linear-gradient(90deg, #5fd38a, #c8f56a, #ffd27a); animation: ts-year 6.4s .3s linear both; }
+@keyframes ts-year { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.ts-year-m { display: flex; justify-content: space-between; font-size: .85rem; font-weight: 700; color: rgba(255, 255, 255, .7); }
+
+/* advice */
+.ts-advice { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 2rem; padding-inline: clamp(1rem, 5vw, 4rem); text-align: start;
+  background: radial-gradient(60% 70% at 70% 45%, #13361f 0%, #08200f 50%, #03100a 85%); }
+.ts-card { justify-self: center; inline-size: min(100%, 520px); display: grid; gap: .8rem; padding: 1.4rem; border-radius: 20px; color: #17231b; background: #fbfff4; border: 2px solid #a86d0a;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .7); animation: ts-card .8s .3s cubic-bezier(.2, 1.2, .3, 1) both; }
+@keyframes ts-card { from { opacity: 0; transform: translateY(40px) rotate(-2deg) scale(.95); } to { opacity: 1; transform: none; } }
+.ts-card-top { display: flex; align-items: center; gap: .6rem; font-size: 1.35rem; }
+.ts-card-top strong { color: #a86d0a; }
+.ts-speaker { margin-inline-start: auto; display: grid; place-items: center; inline-size: 2.6rem; block-size: 2.6rem; border-radius: 50%; background: #24583a; animation: ts-pulse 1.2s ease-in-out infinite; }
+@keyframes ts-pulse { 50% { transform: scale(1.12); box-shadow: 0 0 0 10px rgba(36, 88, 58, .18); } }
+.ts-card ul { display: grid; gap: .5rem; list-style: none; margin: 0; padding: 0; }
+.ts-card li { padding: .7rem .85rem; border-radius: 12px; background: #fff; border: 1px solid #dde3dc; font-size: clamp(.95rem, 1.5vw, 1.1rem); line-height: 1.45; opacity: 0; animation: ts-up .6s cubic-bezier(.2, .8, .2, 1) both; }
+.ts-card-foot { font-size: .85rem; color: #5e6c62; }
+
+/* cover and controls */
+.tour-cover { position: absolute; inset: 0; z-index: 5; display: grid; place-content: center; justify-items: center; gap: .8rem; background: rgba(3, 16, 10, .72); backdrop-filter: blur(3px); font-size: 1.2rem; font-weight: 600; }
+.tour-play { display: grid; place-items: center; inline-size: 6.5rem; block-size: 6.5rem; border-radius: 50%; border: 0; cursor: pointer; color: #03100a;
+  background: linear-gradient(135deg, #c8f56a, #5fd38a); box-shadow: 0 0 0 0 rgba(200, 245, 106, .5); animation: ts-ring 1.8s infinite; }
+@keyframes ts-ring { 70% { box-shadow: 0 0 0 22px rgba(200, 245, 106, 0); } 100% { box-shadow: 0 0 0 0 rgba(200, 245, 106, 0); } }
+.tour-hint { font-size: .9rem; color: #a9c4b1; font-weight: 400; }
+.tour-ui { position: absolute; z-index: 6; inset-inline: 1rem; bottom: 1rem; display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem; border-radius: 999px; background: rgba(3, 16, 10, .78); border: 1px solid rgba(200, 245, 106, .18); }
+.tour-ui > button { display: grid; place-items: center; inline-size: 2.4rem; block-size: 2.4rem; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .08); color: #eef7ea; cursor: pointer; flex: none; }
+.tour-ui > button:hover { background: rgba(200, 245, 106, .2); }
+.tour-progress { position: relative; flex: 1; block-size: 2.4rem; display: grid; align-items: center; }
+.tour-bar { block-size: 5px; border-radius: 5px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+.tour-bar i { display: block; block-size: 100%; inline-size: 100%; transform: scaleX(0); transform-origin: left; background: linear-gradient(90deg, #5fd38a, #c8f56a); }
+.tour-marks { position: absolute; inset: 0; direction: ltr; }
+.tour-marks button { position: absolute; top: 50%; inline-size: 12px; block-size: 12px; margin: -6px 0 0 -6px; border-radius: 50%; border: 2px solid #03100a; background: rgba(255, 255, 255, .55); cursor: pointer; padding: 0; }
+.tour-marks button.on { background: #c8f56a; transform: scale(1.3); }
+
+@media (max-width: 760px) {
+  .ts { padding: 1.5rem 1.2rem 6rem; }
+  .ts-nasa, .ts-advice { grid-template-columns: minmax(0, 1fr); place-content: center; gap: 1rem; }
+  .ts-nasa-art { inline-size: 78%; }
+  .ts-nasa .ts-copy, .ts-advice .ts-copy { justify-items: center; text-align: center; }
+  .ts-sources li { font-size: .88rem; padding: .45rem .7rem; }
+  .ts-stats { grid-template-columns: minmax(0, 1fr); }
+  .ts-year { bottom: 4.4rem; }
+  .ts-year-m span:nth-child(even) { visibility: hidden; }
+  .tour-ui { inset-inline: .5rem; bottom: .5rem; gap: .3rem; }
+  .tour-ui > button { inline-size: 2.1rem; block-size: 2.1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour *, .tour *::before, .tour *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
+}
+.ts-mega span { display: block; }
+.ts-sim { padding-bottom: 9.5rem; }
+.ts-sim .ts-h { font-size: clamp(1.6rem, 3.4vw, 2.8rem); max-inline-size: 26ch; }
