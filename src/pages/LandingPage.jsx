@@ -4,6 +4,7 @@ import { useI18n } from "../i18n.jsx";
 import Brand from "../components/Brand.jsx";
 import LanguageSwitch from "../components/LanguageSwitch.jsx";
 import FarmScene from "../components/landing/FarmScene.jsx";
+import { warmUp } from "../farmCache.js";
 
 // Landing page told as one farm year you scroll through: a cinematic hero, a pinned
 // story where the same farm meets a heatwave, a flood and a drought, the 2022 numbers,
@@ -264,6 +265,14 @@ export default function LandingPage({ onStart }) {
   const featRef = useReveal();
   const dataRef = useReveal();
   const finalRef = useReveal();
+
+  // Wake the free-tier server and get the farmer's last farm ready while they read.
+  useEffect(() => {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem("aapkakhet-farm-v2") || "null"); } catch { /* blocked */ }
+    const id = setTimeout(() => warmUp(saved), 1200);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);

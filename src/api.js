@@ -26,3 +26,6 @@ export const getRotations = (payload) =>
 
 export const simulateFarm = (payload) =>
   request("/api/farm/simulate", { method: "POST", body: JSON.stringify(payload) });
+
+export const getLive = (lat, lon) =>
+  request(`/api/live?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);

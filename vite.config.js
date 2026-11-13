@@ -9,4 +9,8 @@ export default defineConfig({
     port: 5173,
     proxy: { "/api": "http://localhost:8000" },
   },
+  // `npm run preview` can talk to any API: API_PROXY=https://... npm run preview
+  preview: {
+    proxy: { "/api": { target: process.env.API_PROXY || "http://localhost:8000", changeOrigin: true } },
+  },
 });

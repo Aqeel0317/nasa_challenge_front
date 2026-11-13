@@ -4,15 +4,16 @@ import {
   Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, LineChart,
   ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
-import { simulateFarm } from "../api.js";
+import { FARM_DEFAULTS, LAST_YEAR, farmRequest, fetchFarm, readCached } from "../farmCache.js";
 import { useI18n } from "../i18n.jsx";
 import useStoredState from "../hooks/useStoredState.js";
 import { Button, PageHeader, Panel } from "../components/ui.jsx";
 import Farm2D from "../components/farm/Farm2D.jsx";
 import BrandLoader, { MiniBars } from "../components/BrandLoader.jsx";
-import { CROP_ICON, DEFAULT_FIELDS, METRICS, STAGE_KEYS, activeCrop, stageOf } from "../components/farm/farmUtils.js";
+import { CROP_ICON, METRICS, STAGE_KEYS, activeCrop, stageOf } from "../components/farm/farmUtils.js";
 import { HarvestOutlook, Headline, SeasonCalendar, WaterTank, WeatherByMonth, toUnit } from "../components/farm/FarmerDashboard.jsx";
 import { FieldBoard, SCENARIO_ICON, ShockPanel } from "../components/farm/FieldBoard.jsx";
+import LivePanel from "../components/farm/LivePanel.jsx";
 
 const Farm3D = lazy(() => import("../components/farm/Farm3D.jsx"));
 
@@ -22,15 +23,9 @@ const CURVES = ["cc", "soil_water", "biomass"];
 const AXIS = { fill: "var(--muted)", fontSize: 12 };
 const TIP = { background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8 };
 
-// The last farm year (May-April) that is complete, so NASA POWER has every day.
-const now = new Date();
-const LAST_YEAR = now.getFullYear() - (now.getMonth() >= 5 ? 1 : 2);
 const YEARS = Array.from({ length: 12 }, (_, i) => LAST_YEAR - i);
 
-const DEFAULTS = {
-  lat: 31.42, lon: 73.08, year: LAST_YEAR, scenario: "heatwave",
-  irrigation: "deficit", temp_offset: 2, rain_pct: 60, fields: DEFAULT_FIELDS,
-};
+const DEFAULTS = FARM_DEFAULTS;
 
 class WebGLGuard extends Component {
   state = { failed: false };
@@ -45,6 +40,7 @@ export default function FarmPage({ fieldForm }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [stale, setStale] = useState(false);
   const [view, setView] = useState("3d");
   const [metric, setMetric] = useState("ndvi");
   const [curve, setCurve] = useState("cc");
@@ -59,26 +55,29 @@ export default function FarmPage({ fieldForm }) {
   const sel = Math.min(selected, fields.length - 1);
 
   // Field size only changes the money, so it does not re-run the simulation.
-  const requestKey = JSON.stringify({
-    ...settings, fields: fields.map(({ kharif, rabi }) => ({ kharif, rabi })),
-  });
+  const requestKey = JSON.stringify(farmRequest(settings));
 
-  // Re-run the simulation shortly after any setting changes
+  // Show the saved answer for these settings at once; fetch a new one only if it is old
+  // or missing. While loading, the previous farm stays on screen.
   useEffect(() => {
     const id = ++runId.current;
     const body = JSON.parse(requestKey);
     if (!body.fields.some((f) => f.kharif || f.rabi)) { setError(t("pickACrop")); return undefined; }
+    const cached = readCached(body);
+    if (cached) { setData(cached.data); setError(""); }
+    setStale(!!cached && !cached.fresh);
+    if (cached?.fresh) { setBusy(false); return undefined; }
     const timer = setTimeout(async () => {
       setBusy(true);
       try {
-        const res = await simulateFarm(body);
-        if (id === runId.current) { setData(res); setError(""); }
+        const res = await fetchFarm(body);
+        if (id === runId.current) { setData(res); setError(""); setStale(false); }
       } catch (e) {
-        if (id === runId.current) setError(e.message);
+        if (id === runId.current && !cached) setError(e.message);
       } finally {
         if (id === runId.current) setBusy(false);
       }
-    }, 500);
+    }, cached ? 0 : 350);
     return () => clearTimeout(timer);
   }, [requestKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -148,6 +147,12 @@ export default function FarmPage({ fieldForm }) {
   return (
     <div className="page page-wide">
       <PageHeader title={t("farmTitle")} lead={t("farmLead")} />
+
+      <LivePanel lat={settings.lat} lon={settings.lon} />
+
+      {busy && data && (
+        <div className="refresh-pill" role="status"><MiniBars label={t("refreshing")} /> <span>{stale ? t("staleNote") : t("refreshing")}</span></div>
+      )}
 
       {/* ---------------- 1. the farmer's own fields ---------------- */}
       <FieldBoard fields={fields} setFields={(f) => set("fields", f)} data={data}
