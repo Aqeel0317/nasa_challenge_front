@@ -5,12 +5,13 @@ import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRe
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useI18n } from "../../i18n.jsx";
 import {
-  FARM_H, FARM_W, FARMHOUSE, PLOT, ROAD_Y, STAGE_KEYS, TUBEWELL, plotPos, ripeness, stageOf,
+  CROP_ICON, FARM_H, FARMHOUSE, PLOT, SITE_W, STAGE_KEYS, TUBEWELL, activeCrop, fieldPos, ripeness,
 } from "./farmUtils.js";
 
-// The 3D farm. Plant height, density and colour come from the simulation for the
-// chosen day; the plant shapes are stylised, not scientific models of each crop.
-
+// The 3D farm: up to four fields, each growing its kharif crop and then its rabi crop.
+// Plant height, density and colour come from the simulation for the chosen day, and
+// the sky, rain, lightning, heat haze, cracked soil and flood water come from that
+// day's weather. Plant shapes are stylised, not scientific models of each crop.
 const V = 2.2; // vertical exaggeration so crops read at farm scale
 
 function rng(seed) {
@@ -163,6 +164,7 @@ const STUBBLE = new THREE.Color("#cbb27c");
 const SOIL_DRY = new THREE.Color("#c9a774");
 const SOIL_WET = new THREE.Color("#6b4a2e");
 const FALLOW = new THREE.Color("#c7ab80");
+const SCORCHED = new THREE.Color("#b5733a");
 
 function geometryFor(shape) {
   const parts = (SHAPES[shape] || SHAPES.smallbush)();
@@ -180,16 +182,53 @@ function accentScale(when, st, rip) {
   return 0;
 }
 
-const toWorld = (x, y) => new THREE.Vector3(x - FARM_W / 2 + PLOT / 2, 0, y - FARM_H / 2 + PLOT / 2);
+const SITE_H = FARM_H;
+const toWorld = (x, y) => new THREE.Vector3(x - SITE_W / 2, 0, y - SITE_H / 2);
+const fieldCentre = (i) => { const p = fieldPos(i); return toWorld(p.x + PLOT / 2, p.y + PLOT / 2); };
 
-function buildScene(container, keys) {
+const SKY_DAY = new THREE.Color("#bcdcef");
+const SKY_DAY_DARK = new THREE.Color("#1d2c34");
+const SKY_STORM = new THREE.Color("#5f6b74");
+const SKY_HEAT = new THREE.Color("#f2a35e");
+const RAIN_N = 4000;
+
+// Dry, cracked earth drawn once on a canvas
+function crackTexture() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const g = c.getContext("2d");
+  g.fillStyle = "#d2b07a";
+  g.fillRect(0, 0, 256, 256);
+  const r = rng(42);
+  g.strokeStyle = "#7a5634";
+  g.lineCap = "round";
+  for (let k = 0; k < 46; k += 1) {
+    let x = r() * 256, y = r() * 256;
+    g.lineWidth = 1 + r() * 2.2;
+    g.beginPath();
+    g.moveTo(x, y);
+    for (let s = 0; s < 6; s += 1) {
+      x += (r() - 0.5) * 60; y += (r() - 0.5) * 60;
+      g.lineTo(x, y);
+    }
+    g.stroke();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(3, 3);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function buildScene(container, fields) {
   const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(dark ? "#1d2c34" : "#cfe2ec");
-  scene.fog = new THREE.Fog(scene.background, 260, 620);
+  const skyBase = dark ? SKY_DAY_DARK : SKY_DAY;
+  scene.background = skyBase.clone();
+  scene.fog = new THREE.Fog(scene.background.clone(), 200, 480);
 
   const camera = new THREE.PerspectiveCamera(42, 1, 0.5, 1500);
-  camera.position.set(80, 80, 116);
+  camera.position.set(62, 70, 104);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -204,15 +243,16 @@ function buildScene(container, keys) {
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.maxPolarAngle = Math.PI * 0.46;
-  controls.minDistance = 25;
-  controls.maxDistance = 380;
+  controls.minDistance = 20;
+  controls.maxDistance = 300;
 
-  scene.add(new THREE.HemisphereLight(dark ? "#b9cbd6" : "#eef6ff", "#6f5a3a", dark ? 1.1 : 1.6));
+  const hemi = new THREE.HemisphereLight(dark ? "#b9cbd6" : "#eef6ff", "#6f5a3a", dark ? 1.1 : 1.6);
+  scene.add(hemi);
   const sun = new THREE.DirectionalLight("#fff4df", dark ? 1.6 : 2.4);
-  sun.position.set(-90, 150, 70);
+  sun.position.set(-70, 120, 60);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  Object.assign(sun.shadow.camera, { left: -110, right: 110, top: 110, bottom: -110, near: 10, far: 400 });
+  Object.assign(sun.shadow.camera, { left: -90, right: 90, top: 90, bottom: -90, near: 10, far: 360 });
   scene.add(sun);
 
   const flat = (w, h, color, y = 0) => {
@@ -220,22 +260,25 @@ function buildScene(container, keys) {
     m.rotation.x = -Math.PI / 2; m.position.y = y; m.receiveShadow = true; scene.add(m); return m;
   };
   flat(1400, 1400, dark ? "#3f5a37" : "#8db06a", -0.05);
-  flat(FARM_W + 16, FARM_H + 16, "#d4c196", 0);
-  const road = flat(FARM_W + 16, 9, "#bfa77b", 0.01);
-  road.position.z = ROAD_Y - FARM_H / 2;
+  flat(SITE_W + 16, SITE_H + 16, "#d4c196", 0);
 
-  const channel = new THREE.Mesh(new THREE.BoxGeometry(FARM_W + 16, 0.4, 3.2),
-    new THREE.MeshStandardMaterial({ color: "#4f86a8", roughness: 0.2, metalness: 0.1 }));
-  channel.position.set(0, -0.1, -FARM_H / 2 - 10);
+  // Watercourse along the top, and between the fields
+  const waterMat = new THREE.MeshStandardMaterial({ color: "#4f86a8", roughness: 0.2, metalness: 0.1 });
+  const channel = new THREE.Mesh(new THREE.BoxGeometry(SITE_W + 16, 0.4, 3), waterMat);
+  channel.position.set(0, -0.1, -SITE_H / 2 - 6);
   scene.add(channel);
+  const mid = toWorld(PLOT + 4, 0);
+  const between = new THREE.Mesh(new THREE.BoxGeometry(2, 0.4, FARM_H), waterMat);
+  between.position.set(mid.x, -0.1, 0);
+  scene.add(between);
 
-  // Farmhouse and tube-well in the two spare cells of the rabi block
-  const house = toWorld(FARMHOUSE.x, FARMHOUSE.y);
+  // Farmhouse and tube-well in the yard
+  const house = toWorld(FARMHOUSE.x + 9, FARMHOUSE.y + 12);
   const walls = new THREE.Mesh(new THREE.BoxGeometry(14, 6, 10), new THREE.MeshStandardMaterial({ color: "#d8c7b0" }));
   walls.position.set(house.x, 3, house.z); walls.castShadow = true; scene.add(walls);
   const roof = new THREE.Mesh(new THREE.ConeGeometry(10.5, 4, 4), new THREE.MeshStandardMaterial({ color: "#9b5b3c", flatShading: true }));
   roof.rotation.y = Math.PI / 4; roof.scale.set(1, 1, 0.75); roof.position.set(house.x, 8, house.z); roof.castShadow = true; scene.add(roof);
-  const well = toWorld(TUBEWELL.x, TUBEWELL.y);
+  const well = toWorld(TUBEWELL.x + 9, TUBEWELL.y + 14);
   const pond = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 0.5, 24), new THREE.MeshStandardMaterial({ color: "#5b97bd", roughness: 0.2 }));
   pond.position.set(well.x, 0.1, well.z + 2); scene.add(pond);
   const pump = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 4), new THREE.MeshStandardMaterial({ color: "#8a8f95" }));
@@ -243,15 +286,15 @@ function buildScene(container, keys) {
 
   // Trees around the farm
   const treeRand = rng(7);
-  const N = 64;
+  const N = 54;
   const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.5, 4, 5),
     new THREE.MeshStandardMaterial({ color: "#6b4f35" }), N);
-  const crowns = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(3.2, 0),
-    new THREE.MeshStandardMaterial({ color: dark ? "#2f5530" : "#4c7d3f", flatShading: true }), N);
+  const crownMat = new THREE.MeshStandardMaterial({ color: dark ? "#2f5530" : "#4c7d3f", flatShading: true });
+  const crowns = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(3.2, 0), crownMat, N);
   const m = new THREE.Matrix4();
   for (let i = 0; i < N; i += 1) {
     const a = (i / N) * Math.PI * 2 + treeRand() * 0.08;
-    const r = 120 + treeRand() * 60;
+    const r = 95 + treeRand() * 50;
     const s = 0.9 + treeRand() * 0.8;
     const x = Math.cos(a) * r, z = Math.sin(a) * r * 0.85;
     m.compose(new THREE.Vector3(x, 2 * s, z), new THREE.Quaternion(), new THREE.Vector3(s, s, s));
@@ -262,66 +305,87 @@ function buildScene(container, keys) {
   crowns.castShadow = true;
   scene.add(trunks, crowns);
 
-  // One soil plane, one instanced plant mesh, optional accents and a label per plot
-  const plots = {};
-  keys.forEach((key, idx) => {
-    const look = LOOKS[key] || DEFAULT_LOOK;
-    const pos = plotPos(key, idx);
-    const c = toWorld(pos.x, pos.y);
+  // Rain: short falling streaks over the whole farm
+  const rainPos = new Float32Array(RAIN_N * 6);
+  const rr = rng(9);
+  for (let i = 0; i < RAIN_N; i += 1) {
+    const x = (rr() - 0.5) * 220, y = rr() * 90, z = (rr() - 0.5) * 220;
+    rainPos.set([x, y, z, x + 0.3, y - 2.4, z], i * 6);
+  }
+  const rainGeo = new THREE.BufferGeometry();
+  rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos, 3));
+  const rain = new THREE.LineSegments(rainGeo,
+    new THREE.LineBasicMaterial({ color: "#d6e6f2", transparent: true, opacity: 0.55 }));
+  rain.visible = false;
+  rain.frustumCulled = false;
+  scene.add(rain);
+
+  const cracks = crackTexture();
+
+  // One soil plane, flood water, outline and label per field; one plant mesh per crop
+  const plots = fields.map((field, idx) => {
+    const c = fieldCentre(idx);
     const soil = new THREE.Mesh(new THREE.PlaneGeometry(PLOT, PLOT),
       new THREE.MeshStandardMaterial({ color: FALLOW.clone(), roughness: 1 }));
     soil.rotation.x = -Math.PI / 2;
     soil.position.set(c.x, 0.03, c.z);
     soil.receiveShadow = true;
-    soil.userData.crop = key;
+    soil.userData.field = idx;
     scene.add(soil);
 
     const water = new THREE.Mesh(new THREE.PlaneGeometry(PLOT - 0.6, PLOT - 0.6),
-      new THREE.MeshStandardMaterial({ color: "#5b97bd", transparent: true, opacity: 0.55, roughness: 0.15 }));
+      new THREE.MeshStandardMaterial({ color: "#5b97bd", transparent: true, opacity: 0.55, roughness: 0.1, metalness: 0.2 }));
     water.rotation.x = -Math.PI / 2;
     water.position.set(c.x, 0.12, c.z);
     water.visible = false;
     scene.add(water);
 
+    const h = PLOT / 2;
     const outline = new THREE.LineLoop(
       new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-PLOT / 2, 0, -PLOT / 2), new THREE.Vector3(PLOT / 2, 0, -PLOT / 2),
-        new THREE.Vector3(PLOT / 2, 0, PLOT / 2), new THREE.Vector3(-PLOT / 2, 0, PLOT / 2),
+        new THREE.Vector3(-h, 0, -h), new THREE.Vector3(h, 0, -h),
+        new THREE.Vector3(h, 0, h), new THREE.Vector3(-h, 0, h),
       ]),
       new THREE.LineBasicMaterial({ color: "#f3d35a" }));
     outline.position.set(c.x, 0.25, c.z);
     outline.visible = false;
     scene.add(outline);
 
-    const step = look.spacing;
-    const n = Math.floor((PLOT - 1) / step);
-    const rand = rng(100 + idx);
-    const spots = [];
-    for (let i = 0; i < n; i += 1) {
-      for (let j = 0; j < n; j += 1) {
-        spots.push({
-          x: c.x - PLOT / 2 + 0.5 + (i + 0.5) * step + (rand() - 0.5) * step * 0.5,
-          z: c.z - PLOT / 2 + 0.5 + (j + 0.5) * step + (rand() - 0.5) * step * 0.5,
-          yaw: rand() * Math.PI * 2,
-          size: 0.85 + rand() * 0.3,
-          tint: 0.88 + rand() * 0.2,
-        });
+    const crops = {};
+    [field.kharif, field.rabi].filter(Boolean).forEach((key, k) => {
+      if (crops[key]) return;
+      const look = LOOKS[key] || DEFAULT_LOOK;
+      const step = look.spacing * 1.15;
+      const n = Math.floor((PLOT - 1) / step);
+      const rand = rng(100 + idx * 7 + k);
+      const spots = [];
+      for (let i = 0; i < n; i += 1) {
+        for (let j = 0; j < n; j += 1) {
+          spots.push({
+            x: c.x - PLOT / 2 + 0.5 + (i + 0.5) * step + (rand() - 0.5) * step * 0.5,
+            z: c.z - PLOT / 2 + 0.5 + (j + 0.5) * step + (rand() - 0.5) * step * 0.5,
+            yaw: rand() * Math.PI * 2,
+            size: 0.85 + rand() * 0.3,
+            tint: 0.88 + rand() * 0.2,
+          });
+        }
       }
-    }
-    const mesh = new THREE.InstancedMesh(geometryFor(look.shape),
-      new THREE.MeshStandardMaterial({ color: "#ffffff", flatShading: true, roughness: 0.85 }), spots.length);
-    mesh.castShadow = true;
-    spots.forEach((s, i) => mesh.setColorAt(i, new THREE.Color(look.green).multiplyScalar(s.tint)));
-    scene.add(mesh);
-
-    let accent = null;
-    if (look.accent) {
-      accent = new THREE.InstancedMesh(look.accent.geo(),
-        new THREE.MeshStandardMaterial({ color: look.accent.color, roughness: 0.8, flatShading: true }),
-        spots.length * look.accent.points.length);
-      accent.visible = false;
-      scene.add(accent);
-    }
+      const mesh = new THREE.InstancedMesh(geometryFor(look.shape),
+        new THREE.MeshStandardMaterial({ color: "#ffffff", flatShading: true, roughness: 0.85 }), spots.length);
+      mesh.castShadow = true;
+      mesh.visible = false;
+      spots.forEach((s, i) => mesh.setColorAt(i, new THREE.Color(look.green).multiplyScalar(s.tint)));
+      scene.add(mesh);
+      let accent = null;
+      if (look.accent) {
+        accent = new THREE.InstancedMesh(look.accent.geo(),
+          new THREE.MeshStandardMaterial({ color: look.accent.color, roughness: 0.8, flatShading: true }),
+          spots.length * look.accent.points.length);
+        accent.visible = false;
+        scene.add(accent);
+      }
+      crops[key] = { look, mesh, accent, spots };
+    });
 
     const div = document.createElement("div");
     div.className = "farm3d-label";
@@ -329,33 +393,56 @@ function buildScene(container, keys) {
     label.position.set(c.x, 6, c.z);
     scene.add(label);
 
-    plots[key] = { look, soil, water, outline, mesh, accent, spots, div, label };
+    return { soil, water, outline, crops, div, label };
   });
 
-  return { scene, camera, renderer, labels, controls, plots };
+  return { scene, camera, renderer, labels, controls, plots, rain, sun, hemi, cracks, skyBase, crownMat, dark };
 }
 
-export default function Farm3D({ plots, day, selected, onSelect }) {
+// Total rain over the last `n` days up to `day`
+const rainSum = (rain, day, n) => {
+  let s = 0;
+  for (let i = Math.max(0, day - n + 1); i <= day; i += 1) s += rain[i] || 0;
+  return s;
+};
+
+export default function Farm3D({ fields, plots, weather, day, selected, onSelect }) {
   const { t, cropShort } = useI18n();
   const hostRef = useRef(null);
+  const fxRef = useRef(null);
   const worldRef = useRef(null);
   const selectRef = useRef(onSelect);
   selectRef.current = onSelect;
-  const keysSig = plots.map((p) => p.crop).join(",");
+  const sig = fields.map((f) => `${f.kharif || "-"}/${f.rabi || "-"}`).join(",");
 
-  // Build the scene when the set of crops changes
+  // Build the scene when the fields' crops change
   useEffect(() => {
     const host = hostRef.current;
-    const world = buildScene(host, keysSig.split(","));
+    const world = buildScene(host, sig.split(",").map((s) => {
+      const [kharif, rabi] = s.split("/");
+      return { kharif: kharif === "-" ? null : kharif, rabi: rabi === "-" ? null : rabi };
+    }));
     worldRef.current = world;
-    const { scene, camera, renderer, labels, controls } = world;
+    const { scene, camera, renderer, labels, controls, rain } = world;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let raf = 0;
+    const pos = rain.geometry.attributes.position;
     const draw = () => {
       raf = 0;
       controls.update();
+      if (rain.visible && !still) {
+        // Let the rain fall; streaks that reach the ground start again at the top
+        const a = pos.array, speed = world.rainSpeed || 1.6;
+        for (let i = 0; i < a.length; i += 6) {
+          a[i + 1] -= speed; a[i + 4] -= speed;
+          if (a[i + 4] < 0) { a[i + 1] += 90; a[i + 4] += 90; }
+        }
+        pos.needsUpdate = true;
+      }
       renderer.render(scene, camera);
       labels.render(scene, camera);
+      if (rain.visible && !still) raf = requestAnimationFrame(draw);
     };
     const requestDraw = () => { if (!raf) raf = requestAnimationFrame(draw); };
     world.requestDraw = requestDraw;
@@ -386,8 +473,8 @@ export default function Farm3D({ plots, day, selected, onSelect }) {
       const r = renderer.domElement.getBoundingClientRect();
       ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1,
         -((e.clientY - r.top) / r.height) * 2 + 1), camera);
-      const hit = ray.intersectObjects(Object.values(world.plots).map((p) => p.soil))[0];
-      if (hit) selectRef.current(hit.object.userData.crop);
+      const hit = ray.intersectObjects(world.plots.map((p) => p.soil))[0];
+      if (hit) selectRef.current(hit.object.userData.field);
     };
     renderer.domElement.addEventListener("pointerdown", onDown);
     renderer.domElement.addEventListener("pointerup", onUp);
@@ -396,91 +483,146 @@ export default function Farm3D({ plots, day, selected, onSelect }) {
       if (raf) cancelAnimationFrame(raf);
       ro.disconnect();
       controls.dispose();
+      world.cracks.dispose();
       scene.traverse((o) => {
         o.geometry?.dispose();
         if (o.material) [].concat(o.material).forEach((mat) => mat.dispose());
       });
       renderer.dispose();
-      host.innerHTML = "";
+      [...host.children].forEach((ch) => { if (ch !== fxRef.current) ch.remove(); });
       worldRef.current = null;
     };
-  }, [keysSig]);
+  }, [sig]);
 
-  // Update plants, soil and labels whenever the day, results or selection change
+  // Update plants, soil, sky and weather whenever the day, results or selection change
   useEffect(() => {
     const world = worldRef.current;
     if (!world) return;
+    const byKey = Object.fromEntries(plots.map((p) => [p.crop, p]));
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
     const col = new THREE.Color();
     const pos = new THREE.Vector3(), scl = new THREE.Vector3();
 
-    plots.forEach((p) => {
-      const w = world.plots[p.crop];
-      if (!w) return;
-      const { look } = w;
-      const s = p.scenario.series;
-      const st = stageOf(p, day);
-      const growing = st >= 0 && st <= 3;
-      const ccMax = Math.max(...s.cc.filter((v) => v != null), 0.01);
+    // ---- weather of the day ----
+    const rainToday = weather.rain[day] ?? 0;
+    const tmax = weather.tmax[day] ?? 30;
+    const wet = Math.min(1, rainToday / 30);
+    const heat = Math.max(0, Math.min(1, (tmax - 38) / 8));
+    const dry30 = rainSum(weather.rain, day, 30) < 4 && tmax >= 34;
+    const sky = world.skyBase.clone().lerp(SKY_HEAT, heat * 0.75).lerp(SKY_STORM, wet * 0.85);
+    world.scene.background.copy(sky);
+    world.scene.fog.color.copy(sky);
+    world.scene.fog.near = 200 - 140 * Math.max(wet, heat * 0.6);
+    world.sun.intensity = (world.dark ? 1.6 : 2.4) * (1 - wet * 0.65) * (1 + heat * 0.25);
+    world.sun.color.set(heat > 0.2 ? "#ffd9a8" : "#fff4df");
+    world.rain.visible = rainToday >= 2;
+    world.rain.geometry.setDrawRange(0, Math.round(RAIN_N * 2 * Math.min(1, 0.15 + rainToday / 40)));
+    world.rainSpeed = 1.2 + Math.min(2, rainToday / 25);
+    world.crownMat.color.set(world.dark ? "#2f5530" : "#4c7d3f").lerp(new THREE.Color("#8a8a4a"), dry30 ? 0.45 : 0);
 
-      w.outline.visible = selected === p.crop;
-      w.water.visible = (growing && p.flooded && s.soil_water[day] >= 75) || p.scenario.waterlog[day] === 1;
-      w.water.material.opacity = p.flooded ? 0.55 : 0.35;
-      w.soil.material.color.copy(growing ? SOIL_DRY.clone().lerp(SOIL_WET, (s.soil_water[day] ?? 50) / 100) : FALLOW);
+    // Screen effects: heat haze and lightning live in a CSS layer over the canvas
+    const fx = fxRef.current;
+    if (fx) {
+      fx.classList.toggle("fx-heat", heat > 0.35);
+      fx.classList.toggle("fx-storm", rainToday >= 40);
+      fx.style.setProperty("--heat", heat.toFixed(2));
+    }
 
-      w.mesh.visible = st >= 0;
-      const h = st === 4 ? 0.07 : Math.max(0.05, s.height[day] ?? 0) * p.height_m * V;
-      const spread = st === 4 ? 0.8 : 0.35 + 0.8 * ((s.cc[day] ?? 0) / ccMax);
-      const rip = ripeness(p, day);
-      const stress = growing ? 1 - (s.ks[day] ?? 1) : 0;
-      if (st === 4) col.copy(STUBBLE);
-      else col.set(look.green).lerp(new THREE.Color(look.ripe), rip).lerp(STRESSED, stress * 0.7);
-      w.mesh.material.color.copy(col);
+    world.plots.forEach((w, idx) => {
+      const field = fields[idx];
+      if (!field) return;
+      const act = activeCrop(field, byKey, day);
+      w.outline.visible = selected === idx;
 
-      w.spots.forEach((sp, i) => {
-        q.setFromAxisAngle(up, sp.yaw);
-        const xz = look.width * spread * sp.size;
-        m.compose(pos.set(sp.x, 0.03, sp.z), q, scl.set(xz, h * sp.size, xz));
-        w.mesh.setMatrixAt(i, m);
-      });
-      w.mesh.instanceMatrix.needsUpdate = true;
-
-      if (w.accent) {
-        const a = look.accent;
-        const size = st >= 0 && st <= 3 ? accentScale(a.when, st, rip) : 0;
-        w.accent.visible = size > 0.05;
-        if (a.lateColor) w.accent.material.color.set(a.color).lerp(new THREE.Color(a.lateColor), st === 3 ? rip : 0);
-        if (w.accent.visible) {
-          let k = 0;
-          w.spots.forEach((sp) => {
-            const xz = look.width * spread * sp.size;
-            a.points.forEach(([ang, r, y]) => {
-              const th = sp.yaw + ang;
-              m.compose(pos.set(sp.x + Math.cos(th) * r * xz, y * h * sp.size, sp.z + Math.sin(th) * r * xz),
-                q, scl.setScalar(size * sp.size * (0.7 + 0.3 * xz)));
-              w.accent.setMatrixAt(k, m);
-              k += 1;
-            });
-          });
-          w.accent.instanceMatrix.needsUpdate = true;
+      Object.entries(w.crops).forEach(([key, c]) => {
+        const p = byKey[key];
+        const show = p && act.key === key;
+        c.mesh.visible = !!show;
+        if (c.accent) c.accent.visible = false;
+        if (!show) return;
+        const { look } = c;
+        const s = p.scenario.series;
+        const st = p.scenario.stage[day];
+        const growing = st >= 0 && st <= 3;
+        const ccMax = Math.max(...s.cc.filter((v) => v != null), 0.01);
+        const h = st === 4 ? 0.07 : Math.max(0.05, s.height[day] ?? 0) * p.height_m * V;
+        const spread = st === 4 ? 0.8 : 0.35 + 0.8 * ((s.cc[day] ?? 0) / ccMax);
+        const rip = ripeness(p, day);
+        const stress = growing ? 1 - (s.ks[day] ?? 1) : 0;
+        const scorch = growing ? (s.heat[day] ?? 0) : 0;
+        if (st === 4) col.copy(STUBBLE);
+        else {
+          col.set(look.green).lerp(new THREE.Color(look.ripe), rip).lerp(STRESSED, stress * 0.8)
+            .lerp(SCORCHED, scorch * 0.6);
         }
-      }
+        c.mesh.material.color.copy(col);
+        // Water-stressed plants droop: shorter and narrower
+        const droop = 1 - stress * 0.35;
+        c.spots.forEach((sp, i) => {
+          q.setFromAxisAngle(up, sp.yaw);
+          const xz = look.width * spread * sp.size;
+          m.compose(pos.set(sp.x, 0.03, sp.z), q, scl.set(xz, h * sp.size * droop, xz));
+          c.mesh.setMatrixAt(i, m);
+        });
+        c.mesh.instanceMatrix.needsUpdate = true;
 
-      // Short labels everywhere; the selected plot also shows its growth stage
+        if (c.accent) {
+          const a = look.accent;
+          const size = growing ? accentScale(a.when, st, rip) : 0;
+          c.accent.visible = size > 0.05;
+          if (a.lateColor) c.accent.material.color.set(a.color).lerp(new THREE.Color(a.lateColor), st === 3 ? rip : 0);
+          if (c.accent.visible) {
+            let k = 0;
+            c.spots.forEach((sp) => {
+              const xz = look.width * spread * sp.size;
+              a.points.forEach(([ang, r, y]) => {
+                const th = sp.yaw + ang;
+                m.compose(pos.set(sp.x + Math.cos(th) * r * xz, y * h * sp.size * droop, sp.z + Math.sin(th) * r * xz),
+                  q, scl.setScalar(size * sp.size * (0.7 + 0.3 * xz)));
+                c.accent.setMatrixAt(k, m);
+                k += 1;
+              });
+            });
+            c.accent.instanceMatrix.needsUpdate = true;
+          }
+        }
+      });
+
+      // Soil: wet and dark after rain, cracked when dry, under water when flooded
+      const p = act.key ? byKey[act.key] : null;
+      const growing = act.growing && p;
+      const soilWater = growing ? (p.scenario.series.soil_water[day] ?? 50) : (dry30 ? 5 : 40 + wet * 60);
+      const cracked = soilWater < 22 && (dry30 || growing);
+      const mat = w.soil.material;
+      if ((mat.map !== null) !== cracked) { mat.map = cracked ? world.cracks : null; mat.needsUpdate = true; }
+      mat.color.copy(cracked ? new THREE.Color("#ffffff")
+        : (act.key ? SOIL_DRY.clone().lerp(SOIL_WET, soilWater / 100) : FALLOW.clone().lerp(SOIL_WET, wet * 0.6)));
+      const flooded = growing && ((p.flooded && soilWater >= 75) || p.scenario.waterlog[day] === 1);
+      w.water.visible = flooded || rainToday >= 50;
+      w.water.material.opacity = growing && p.flooded && !p.scenario.waterlog[day] ? 0.45 : 0.7;
+      w.water.position.y = growing && p.scenario.waterlog[day] ? 0.12 + 0.6 : 0.12;
+
+      // Label: field name, crop in the ground and its stage
       w.div.innerHTML = "";
       const name = document.createElement("strong");
-      name.textContent = cropShort(p.crop);
+      name.textContent = `${t("fieldN", { n: idx + 1 })} · ${act.key ? `${CROP_ICON[act.key] || ""} ${cropShort(act.key)}` : t("bareNow")}`;
       w.div.append(name);
-      if (selected === p.crop) {
+      if (selected === idx && p) {
         const sub = document.createElement("span");
-        sub.textContent = st < 0 ? t("notSown") : st === 4 ? t("harvested") : t(`stS_${STAGE_KEYS[st]}`);
+        const st = p.scenario.stage[day];
+        sub.textContent = st === 4 ? t("harvested") : t(`stS_${STAGE_KEYS[st]}`);
         w.div.append(sub);
       }
-      w.div.classList.toggle("is-selected", selected === p.crop);
-      w.label.position.y = 3 + h;
+      w.div.classList.toggle("is-selected", selected === idx);
+      w.div.classList.toggle("is-stressed", !!growing && (p.scenario.series.ks[day] ?? 1) < 0.55);
+      w.label.position.y = 4 + (p && act.growing ? p.height_m * V : 0);
     });
     world.requestDraw?.();
-  }, [plots, day, selected, t, cropShort]);
+  }, [fields, plots, weather, day, selected, t, cropShort]);
 
-  return <div ref={hostRef} className="farm3d" role="img" aria-label={t("farm3dLabel")} />;
+  return (
+    <div ref={hostRef} className="farm3d" role="img" aria-label={t("farm3dLabel")}>
+      <div ref={fxRef} className="farm3d-fx" aria-hidden="true"><i className="fx-haze" /><i className="fx-flash" /></div>
+    </div>
+  );
 }

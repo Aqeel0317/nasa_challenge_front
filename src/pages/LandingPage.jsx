@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ArrowRight, Box, Languages, Layers, Sprout } from "lucide-react";
 import { useI18n } from "../i18n.jsx";
 import Brand from "../components/Brand.jsx";
@@ -83,8 +84,24 @@ function SeasonLoop() {
   );
 }
 
+// The hero farm cycles through the weather a season can bring.
+const MOODS = [["normal", "🌤️"], ["heatwave", "🔥"], ["flood", "🌊"], ["drought", "🏜️"]];
+
+function useMoodCycle() {
+  const [i, setI] = useState(0);
+  const [auto, setAuto] = useState(true);
+  useEffect(() => {
+    if (!auto || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+    const id = setInterval(() => setI((k) => (k + 1) % MOODS.length), 4200);
+    return () => clearInterval(id);
+  }, [auto]);
+  return [i, (k) => { setAuto(false); setI(k); }];
+}
+
 export default function LandingPage({ onStart }) {
   const { t } = useI18n();
+  const [moodIdx, pickMood] = useMoodCycle();
+  const [mood, moodIcon] = MOODS[moodIdx];
   const features = [
     { icon: Layers, key: "plans" },
     { icon: Box, key: "sim" },
@@ -105,7 +122,8 @@ export default function LandingPage({ onStart }) {
       <section className="hero">
         <div className="hero-copy">
           <p className="hero-name"><bdi lang="ur">آپ کا کھیت</bdi></p>
-          <h1>{t("lp_title")}</h1>
+          <p className="hero-eyebrow">{t("lp_eyebrow")}</p>
+          <h1>{t("lp_title")} <span className="hero-punch">{t("lp_title2")}</span></h1>
           <p className="hero-lead">{t("lp_lead")}</p>
           <div className="hero-actions">
             <button type="button" className="btn btn-primary btn-lg" onClick={onStart}>
@@ -116,9 +134,39 @@ export default function LandingPage({ onStart }) {
           </div>
           <p className="hero-note">{t("lp_free")}</p>
         </div>
-        <div className="hero-art">
-          <FarmScene label={t("lp_sceneLabel")} />
+        <div className={`hero-art hero-${mood}`}>
+          <FarmScene label={t("lp_sceneLabel")} mood={mood} />
+          <div className="mood-card" aria-live="polite">
+            <span className="mood-tag">{t("lp_moodTag")}</span>
+            <strong key={mood} className="mood-title"><span aria-hidden="true">{moodIcon}</span> {t(`mood_${mood}`)}</strong>
+            <span key={`${mood}-l`} className="mood-line">{t(`mood_${mood}_line`)}</span>
+          </div>
+          <div className="mood-picker" role="group" aria-label={t("lp_moodTag")}>
+            {MOODS.map(([m, icon], k) => (
+              <button key={m} type="button" aria-pressed={k === moodIdx} onClick={() => pickMood(k)}
+                      title={t(`mood_${m}`)}>
+                <span aria-hidden="true">{icon}</span><span className="sr-only">{t(`mood_${m}`)}</span>
+              </button>
+            ))}
+          </div>
         </div>
+      </section>
+
+      <section className="lp-stats">
+        <h2>{t("lp_statsTitle")}</h2>
+        <div className="stat-band">
+          {["people", "acres", "season"].map((k) => (
+            <div key={k} className="big-stat">
+              <strong><bdi>{t(`lp_stat_${k}_n`)}</bdi></strong>
+              <span>{t(`lp_stat_${k}`)}</span>
+            </div>
+          ))}
+        </div>
+        <button type="button" className="btn btn-primary btn-lg btn-alarm" onClick={onStart}>
+          <span>{t("lp_statsCta")}</span>
+          <ArrowRight size={20} aria-hidden="true" className="flip-rtl" />
+        </button>
+        <p className="stats-src">{t("lp_statsSrc")}</p>
       </section>
 
       <section className="lp-section" id="how">

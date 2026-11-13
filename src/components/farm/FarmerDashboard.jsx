@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { useI18n } from "../../i18n.jsx";
 import { Panel } from "../ui.jsx";
 import { KHARIF_ORDER, RABI_ORDER } from "./farmUtils.js";
@@ -28,7 +27,6 @@ export function cropStatus(plot) {
   return { share, level };
 }
 
-const ICON = { good: CheckCircle2, watch: AlertTriangle, risk: XCircle };
 
 // Daily health colour for the season calendar
 function dayHealth(plot, i) {
@@ -69,60 +67,21 @@ export function Headline({ data }) {
   return <p className="headline" role="status">{text}</p>;
 }
 
-export function CropStatusCards({ data, selected, onSelect, unit }) {
-  const { t, cropShort } = useI18n();
-  return groupPlots(data.plots).map((g) => (
-    <div key={g.key} className="status-group">
-      <h3 className="group-heading">{t(`${g.key}Block`)}</h3>
-      <div className="status-cards">
-        {g.plots.map((p) => {
-          const { share, level } = cropStatus(p);
-          const Icon = ICON[level];
-          const b = p.baseline.summary.yield_t_ha, s = p.scenario.summary.yield_t_ha;
-          const diff = toUnit(s - b, unit);
-          return (
-            <button key={p.crop} type="button" className={`status-card status-${level}`}
-                    aria-pressed={selected === p.crop} onClick={() => onSelect(p.crop)}>
-              <span className="status-top">
-                <span className="status-crop">{cropShort(p.crop)}</span>
-                <span className="status-word"><Icon size={15} aria-hidden="true" />{t(`lvl_${level}`)}</span>
-              </span>
-              <span className="status-yield">
-                <bdi className="num">{fmtYield(s, unit)}</bdi>
-                <span className="status-unit">{t(`unit_${unit}`)}</span>
-              </span>
-              <span className="status-label">{t(`ylabel_${p.yield_label.replace(" ", "_")}`)}</span>
-              <span className="share-row" title={t("shareOfBest", { pct: Math.round(share * 100) })}>
-                <span className="share-track" aria-hidden="true">
-                  <span className="share-fill" style={{ inlineSize: `${Math.min(100, Math.round(share * 100))}%` }} />
-                </span>
-                <bdi className="share-pct">{Math.round(share * 100)}%</bdi>
-              </span>
-              <span className="status-note">
-                {Math.abs(diff) < (unit === "maund" ? 1 : 0.1)
-                  ? t("sameAsNormal")
-                  : t(diff < 0 ? "lessThanNormal" : "moreThanNormal",
-                      { n: Math.abs(diff).toFixed(unit === "maund" ? 0 : 1), unit: t(`unit_${unit}`) })}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  ));
-}
-
-export function SeasonCalendar({ data, day, onDay }) {
-  const { t, cropShort, lang } = useI18n();
+export function SeasonCalendar({ data, fields, day, onDay }) {
+  const { t, lang } = useI18n();
+  const byKey = Object.fromEntries(data.plots.map((p) => [p.crop, p]));
   const n = data.dates.length;
   const locale = lang === "ur" ? "ur-PK" : "en-GB";
   const months = data.dates.map((iso, i) => ({ iso, i })).filter(({ iso }) => iso.endsWith("-01"));
 
   // Collapse days into runs of the same colour so each row is a handful of bars.
-  const runs = (plot) => {
+  // A field's year: its kharif crop, then its rabi crop; days with neither are bare.
+  const runs = (field) => {
+    const crops = [field.kharif, field.rabi].map((k) => byKey[k]).filter(Boolean);
     const out = [];
     for (let i = 0; i < n; i += 1) {
-      const h = dayHealth(plot, i);
+      const growing = crops.find((p) => p.scenario.stage[i] >= 0 && p.scenario.stage[i] <= 3);
+      const h = growing ? dayHealth(growing, i) : "bare";
       const last = out[out.length - 1];
       if (last && last.h === h) last.to = i;
       else out.push({ h, from: i, to: i });
@@ -144,27 +103,24 @@ export function SeasonCalendar({ data, day, onDay }) {
             ))}
           </div>
         </div>
-        {groupPlots(data.plots).map((g) => [
-          <div key={g.key} className="cal-group" dir="auto">{t(`${g.key}Block`)}</div>,
-          ...g.plots.map((p) => (
-          <div key={p.crop} className="cal-row">
-            <span className="cal-name" dir="auto">{cropShort(p.crop)}</span>
+        {fields.map((f, idx) => (
+          <div key={idx} className="cal-row">
+            <span className="cal-name" dir="auto">{t("fieldN", { n: idx + 1 })}</span>
             <div className="cal-track" onClick={(e) => {
               const r = e.currentTarget.getBoundingClientRect();
               onDay(Math.round(((e.clientX - r.left) / r.width) * (n - 1)));
             }}>
-              {runs(p).map((r) => (
+              {runs(f).map((r) => (
                 <span key={r.from} className={`cal-run cal-${r.h}`}
                       style={{ left: `${(100 * r.from) / n}%`, width: `${(100 * (r.to - r.from + 1)) / n}%` }} />
               ))}
               <span className="cal-today" style={{ left: `${(100 * day) / n}%` }} />
             </div>
           </div>
-          )),
-        ])}
+        ))}
       </div>
       <div className="cal-key">
-        {["good", "watch", "risk", "wet"].map((k) => (
+        {["good", "watch", "risk", "wet", "bare"].map((k) => (
           <span key={k}><i className={`cal-${k}`} />{t(`cal_${k}`)}</span>
         ))}
       </div>

@@ -3,6 +3,12 @@
 // (spade), a woman picking cotton, an elder on a charpai checking his phone, a
 // buffalo grazing, a tube-well filling the channel, a tractor in the far field,
 // a brick-kiln chimney and the village beyond. Motion stops for reduced-motion users.
+// The `mood` prop replays the same farm under a heatwave, a flood or a drought.
+
+const RAIN = Array.from({ length: 90 }, (_, i) => ({
+  x: (i * 137) % 1240 - 20, y: (i * 61) % 600, d: ((i * 0.13) % 0.9).toFixed(2),
+}));
+const CRACKS = "M40 470l40 18 30-10 34 22M180 480l26 30 40-8M300 462l22 26-18 34M420 560l40-24 36 16M560 470l18 30 44 4M700 560l34-30 48 10M820 470l30 24-6 40M960 560l40-22 30 18M1080 470l24 34 50-6M120 560l30-26 44 8";
 
 const WHEAT = Array.from({ length: 46 }, (_, i) => ({
   x: 8 + i * 8.4 + ((i * 37) % 7),
@@ -14,9 +20,9 @@ const COTTON = [
 ];
 const FAR_TREES = [30, 95, 380, 455, 520, 600, 690, 760, 850, 920, 1105, 1170];
 
-export default function FarmScene({ label }) {
+export default function FarmScene({ label, mood = "normal" }) {
   return (
-    <svg className="farm-scene" viewBox="0 0 1200 600" role="img" aria-label={label}
+    <svg className={`farm-scene mood-${mood}`} viewBox="0 0 1200 600" role="img" aria-label={label}
          preserveAspectRatio="xMidYMid slice">
       <defs>
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
@@ -31,6 +37,14 @@ export default function FarmScene({ label }) {
           <stop offset="0" stopColor="#7fb8a4" />
           <stop offset="1" stopColor="#5f9f7e" />
         </linearGradient>
+        <linearGradient id="heatSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#e2532a" />
+          <stop offset="0.7" stopColor="#ffb25a" />
+        </linearGradient>
+        <linearGradient id="floodWater" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#7d8f8a" stopOpacity=".92" />
+          <stop offset="1" stopColor="#5c6b5f" stopOpacity=".95" />
+        </linearGradient>
         <pattern id="weave" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect width="6" height="6" fill="#d9b779" />
           <path d="M0 3H6M3 0V6" stroke="#b48d4c" strokeWidth="1.2" />
@@ -39,6 +53,8 @@ export default function FarmScene({ label }) {
 
       {/* sky, sun, clouds, birds */}
       <rect width="1200" height="600" fill="url(#sky)" />
+      <rect className="tint tint-heat" width="1200" height="600" fill="url(#heatSky)" />
+      <rect className="tint tint-storm" width="1200" height="600" fill="#4e5a63" />
       <circle cx="930" cy="150" r="130" fill="url(#sunGlow)" className="sun-glow" />
       <circle cx="930" cy="150" r="50" fill="#f8c94d" />
       <g className="cloud cloud-a" fill="#fff" opacity=".9">
@@ -99,7 +115,7 @@ export default function FarmScene({ label }) {
       </g>
 
       {/* paddy field with standing water, and the tube-well */}
-      <path d="M470 360H1200V440H420Z" fill="url(#paddy)" />
+      <path className="paddy-field" d="M470 360H1200V440H420Z" fill="url(#paddy)" />
       <g className="shimmer" stroke="#cfeee4" strokeWidth="2" strokeLinecap="round" opacity=".7">
         <path d="M560 380h40M700 395h55M880 378h45M1020 405h60M640 420h40M940 425h50" />
       </g>
@@ -122,6 +138,7 @@ export default function FarmScene({ label }) {
       <path d="M0 360H470L420 440H0Z" fill="#a7c96b" />
       <path d="M0 440H1200V600H0Z" fill="#c9a874" />
       <path d="M0 540H1200V600H0Z" fill="#b8925d" />
+      <path className="cracks" d={CRACKS} stroke="#6e4a2a" strokeWidth="3" fill="none" strokeLinecap="round" />
 
       {/* wheat field, swaying */}
       <g className="wheat">
@@ -221,6 +238,18 @@ export default function FarmScene({ label }) {
           <path d="M-12 -104q-10 8 -12 22" stroke="#f4f1ea" strokeWidth="5" fill="none" strokeLinecap="round" />
         </g></g>
       </g>
+      {/* weather layers, shown by mood */}
+      <g className="floodwater">
+        <path d="M0 470Q150 458 300 470T600 470T900 470T1200 470V600H0Z" fill="url(#floodWater)" />
+        <path className="flood-ripple" d="M60 500h80M300 530h120M620 505h90M880 540h110M1040 510h80" stroke="#c9d6d0" strokeWidth="3" strokeLinecap="round" />
+      </g>
+      <g className="rain" stroke="#dfe9ef" strokeWidth="2" strokeLinecap="round" opacity=".8">
+        {RAIN.map((r, i) => (
+          <path key={i} className="drop" d={`M${r.x} ${r.y}l-8 26`} style={{ animationDelay: `-${r.d}s` }} />
+        ))}
+      </g>
+      <rect className="flash" width="1200" height="600" fill="#fff" />
+      <rect className="haze" width="1200" height="600" fill="#ff9a3c" />
     </svg>
   );
 }

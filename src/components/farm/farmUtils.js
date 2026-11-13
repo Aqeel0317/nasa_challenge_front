@@ -1,32 +1,79 @@
-// Shared layout and colour scales for the 2D map and the 3D farm.
+// Shared layout, crop facts and colour scales for the 2D map and the 3D farm.
 
-// The farm is a 5-column grid of 28 m plots: two rows of kharif (summer) crops,
-// a farm road, then two rows of rabi (winter) crops. The two spare cells in the
-// rabi rows hold the farmhouse and the tube-well.
-export const PLOT = 28;
-const GAP = 5;
-const ROAD = 10;
-const COLS = 5;
+// The farm is up to four square fields in a 2 x 2 grid, with a watercourse
+// between them. Each field is one rotation: a kharif crop, then a rabi crop.
+// The farmhouse and tube-well stand beside the fields.
+export const PLOT = 44;                      // field side, metres
+const GAP = 8;
+export const FARM_W = 2 * PLOT + GAP;        // 96 m
+export const FARM_H = 2 * PLOT + GAP;        // 96 m
+export const SITE_W = FARM_W + 34;           // fields + yard with farmhouse and tube-well
+export const FARMHOUSE = { x: FARM_W + 8, y: 6 };
+export const TUBEWELL = { x: FARM_W + 8, y: PLOT + GAP + 8 };
+export const fieldPos = (i) => ({ x: (i % 2) * (PLOT + GAP), y: Math.floor(i / 2) * (PLOT + GAP) });
+
+export const MAX_FIELDS = 4;
 export const KHARIF_ORDER = ["cotton", "rice", "maize", "sorghum", "pearl_millet",
   "mung_bean", "soybean", "guar", "sunflower", "sesbania"];
 export const RABI_ORDER = ["wheat", "barley", "oats", "mustard",
   "chickpea", "lentil", "berseem", "potato"];
-export const FARM_W = COLS * PLOT + (COLS - 1) * GAP;          // 160 m
-export const FARM_H = 4 * PLOT + 2 * GAP + ROAD;              // 132 m
+export const DEFAULT_FIELDS = [
+  { kharif: "cotton", rabi: "wheat", acres: 4 },
+  { kharif: "rice", rabi: "wheat", acres: 3 },
+  { kharif: "mung_bean", rabi: "wheat", acres: 2 },
+  { kharif: "sesbania", rabi: "chickpea", acres: 2 },
+];
 
-const rowY = (row) => row * (PLOT + GAP) + (row >= 2 ? ROAD - GAP : 0);
-const colX = (col) => col * (PLOT + GAP);
+// Picture for each crop, so a farmer can find it without reading.
+export const CROP_ICON = {
+  cotton: "☁️", rice: "🍚", maize: "🌽", sorghum: "🌾", pearl_millet: "🌾", mung_bean: "🫘",
+  soybean: "🫘", guar: "🫛", sunflower: "🌻", sesbania: "🌿", wheat: "🌾", barley: "🌾",
+  oats: "🌱", mustard: "🌼", chickpea: "🫘", lentil: "🫘", berseem: "☘️", potato: "🥔",
+};
+// Legumes fix nitrogen from the air and leave the soil richer for the next crop.
+export const NITROGEN_FIXERS = new Set(["mung_bean", "soybean", "guar", "sesbania", "chickpea", "lentil", "berseem"]);
 
-export const LAYOUT = {};
-KHARIF_ORDER.forEach((k, i) => { LAYOUT[k] = { x: colX(i % COLS), y: rowY(Math.floor(i / COLS)) }; });
-RABI_ORDER.forEach((k, i) => { LAYOUT[k] = { x: colX(i % 4), y: rowY(2 + Math.floor(i / 4)) }; });
-export const FARMHOUSE = { x: colX(4), y: rowY(2) };
-export const TUBEWELL = { x: colX(4), y: rowY(3) };
-export const ROAD_Y = rowY(1) + PLOT + (ROAD - GAP) / 2 + GAP / 2;  // centre line of the farm road
+// Rough Pakistani market prices, rupees per 40 kg maund (2025). Fodder is valued as
+// dry fodder; green manure is ploughed in, not sold. For a sense of scale only.
+export const PRICE_PER_MAUND = {
+  cotton: 8500, rice: 3800, maize: 2600, sorghum: 2600, pearl_millet: 2800, mung_bean: 9000,
+  soybean: 6500, guar: 8000, sunflower: 6500, sesbania: 0, wheat: 3500, barley: 2800,
+  oats: 900, mustard: 7000, chickpea: 9500, lentil: 11000, berseem: 900, potato: 1600,
+};
+// 1 t/ha = 1000 kg / 40 kg per maund / 2.471 acres per hectare
+export const MAUND_PER_ACRE = 10.12;
 
-// Crops not in the layout (added to the registry later) go on an extra row.
-export function plotPos(key, index = 0) {
-  return LAYOUT[key] || { x: colX(index % COLS), y: rowY(4) + (PLOT + GAP) * Math.floor(index / COLS) };
+// Value in rupees of a yield (t/ha) on a number of acres
+export const rupees = (crop, tha, acres) => tha * MAUND_PER_ACRE * acres * (PRICE_PER_MAUND[crop] ?? 0);
+
+// "Rs 4.2 lakh" / "4.2 لاکھ روپے": the way farmers talk about money
+export function formatRs(v, lang) {
+  const a = Math.abs(v);
+  const ur = lang === "ur";
+  let n, unit = "";
+  if (a >= 1e7) { n = (a / 1e7).toFixed(1); unit = ur ? " کروڑ" : " crore"; }
+  else if (a >= 1e5) { n = (a / 1e5).toFixed(1); unit = ur ? " لاکھ" : " lakh"; }
+  else n = Math.round(a).toLocaleString("en-US");
+  n = n.replace(/\.0$/, "");
+  return ur ? `${n}${unit} روپے` : `Rs ${n}${unit}`;
+}
+
+// Which crop is in a field on a given day: the one growing, otherwise the stubble
+// of the last harvest, otherwise nothing (bare soil).
+export function activeCrop(field, byKey, day) {
+  const ks = [field.kharif, field.rabi].filter((k) => k && byKey[k]);
+  const growing = ks.find((k) => { const s = byKey[k].scenario.stage[day]; return s >= 0 && s <= 3; });
+  if (growing) return { key: growing, growing: true };
+  const done = ks.filter((k) => byKey[k].scenario.stage[day] === 4)
+    .sort((a, b) => byKey[b].harvest_date.localeCompare(byKey[a].harvest_date));
+  return done.length ? { key: done[0], growing: false } : { key: null, growing: false };
+}
+
+// Days in the farm year when nothing grows in the field (bare soil erodes and loses water)
+export function bareDays(field, byKey, n) {
+  let bare = 0;
+  for (let d = 0; d < n; d += 1) if (!activeCrop(field, byKey, d).growing) bare += 1;
+  return bare;
 }
 
 export const METRICS = ["ndvi", "soil_water", "stress", "heat"];

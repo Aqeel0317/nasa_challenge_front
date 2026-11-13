@@ -1,5 +1,5 @@
 import { Component, Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
-import { Pause, Play, MapPin } from "lucide-react";
+import { Pause, Play, MapPin, RotateCcw } from "lucide-react";
 import {
   Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, LineChart,
   ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -10,10 +10,9 @@ import useStoredState from "../hooks/useStoredState.js";
 import { Button, PageHeader, Panel } from "../components/ui.jsx";
 import Farm2D from "../components/farm/Farm2D.jsx";
 import BrandLoader, { MiniBars } from "../components/BrandLoader.jsx";
-import { METRICS, STAGE_KEYS, stageOf } from "../components/farm/farmUtils.js";
-import {
-  CropStatusCards, Headline, HarvestOutlook, SeasonCalendar, WaterTank, WeatherByMonth, groupPlots, toUnit,
-} from "../components/farm/FarmerDashboard.jsx";
+import { CROP_ICON, DEFAULT_FIELDS, METRICS, STAGE_KEYS, activeCrop, stageOf } from "../components/farm/farmUtils.js";
+import { HarvestOutlook, Headline, SeasonCalendar, WaterTank, WeatherByMonth, toUnit } from "../components/farm/FarmerDashboard.jsx";
+import { FieldBoard, SCENARIO_ICON, ShockPanel } from "../components/farm/FieldBoard.jsx";
 
 const Farm3D = lazy(() => import("../components/farm/Farm3D.jsx"));
 
@@ -29,8 +28,8 @@ const LAST_YEAR = now.getFullYear() - (now.getMonth() >= 5 ? 1 : 2);
 const YEARS = Array.from({ length: 12 }, (_, i) => LAST_YEAR - i);
 
 const DEFAULTS = {
-  lat: 31.42, lon: 73.08, year: LAST_YEAR, scenario: "drought",
-  irrigation: "deficit", temp_offset: 2, rain_pct: 60,
+  lat: 31.42, lon: 73.08, year: LAST_YEAR, scenario: "heatwave",
+  irrigation: "deficit", temp_offset: 2, rain_pct: 60, fields: DEFAULT_FIELDS,
 };
 
 class WebGLGuard extends Component {
@@ -41,37 +40,47 @@ class WebGLGuard extends Component {
 
 export default function FarmPage({ fieldForm }) {
   const { t, lang, crop } = useI18n();
-  const [settings, setSettings] = useStoredState("rotaterra-farm", DEFAULTS);
+  const [stored, setSettings] = useStoredState("aapkakhet-farm-v2", DEFAULTS);
+  const settings = { ...DEFAULTS, ...stored, fields: stored.fields?.length ? stored.fields : DEFAULTS.fields };
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [view, setView] = useState("3d");
   const [metric, setMetric] = useState("ndvi");
   const [curve, setCurve] = useState("cc");
-  const [selected, setSelected] = useState("rice");
-  const [day, setDay] = useState(115);
+  const [selected, setSelected] = useState(0);
+  const [day, setDay] = useState(105);
   const [playing, setPlaying] = useState(false);
   const [unit, setUnit] = useStoredState("rotaterra-unit", { v: lang === "ur" ? "maund" : "tha" });
   const runId = useRef(0);
 
-  const set = (k, v) => setSettings((s) => ({ ...s, [k]: v }));
+  const set = (k, v) => setSettings((s) => ({ ...DEFAULTS, ...s, [k]: v }));
+  const fields = settings.fields;
+  const sel = Math.min(selected, fields.length - 1);
+
+  // Field size only changes the money, so it does not re-run the simulation.
+  const requestKey = JSON.stringify({
+    ...settings, fields: fields.map(({ kharif, rabi }) => ({ kharif, rabi })),
+  });
 
   // Re-run the simulation shortly after any setting changes
   useEffect(() => {
     const id = ++runId.current;
+    const body = JSON.parse(requestKey);
+    if (!body.fields.some((f) => f.kharif || f.rabi)) { setError(t("pickACrop")); return undefined; }
     const timer = setTimeout(async () => {
       setBusy(true);
       try {
-        const res = await simulateFarm(settings);
+        const res = await simulateFarm(body);
         if (id === runId.current) { setData(res); setError(""); }
       } catch (e) {
         if (id === runId.current) setError(e.message);
       } finally {
         if (id === runId.current) setBusy(false);
       }
-    }, 450);
+    }, 500);
     return () => clearTimeout(timer);
-  }, [settings]);
+  }, [requestKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Season playback
   useEffect(() => {
@@ -79,9 +88,9 @@ export default function FarmPage({ fieldForm }) {
     const timer = setInterval(() => {
       setDay((d) => {
         if (d >= data.dates.length - 1) { setPlaying(false); return d; }
-        return d + 2;
+        return d + 1;
       });
-    }, 70);
+    }, 45);
     return () => clearInterval(timer);
   }, [playing, data]);
 
@@ -89,8 +98,13 @@ export default function FarmPage({ fieldForm }) {
   const fmtDate = (iso, opts = { day: "numeric", month: "long", year: "numeric" }) =>
     new Date(`${iso}T00:00:00`).toLocaleDateString(locale, opts);
 
-  const plot = data?.plots.find((p) => p.crop === selected) || data?.plots[0];
+  const byKey = useMemo(() => Object.fromEntries((data?.plots || []).map((p) => [p.crop, p])), [data]);
   const d = data ? Math.min(day, data.dates.length - 1) : 0;
+  const field = fields[sel];
+  const act = data && field ? activeCrop(field, byKey, d) : { key: null };
+  // The crop to explain: the one in the ground, otherwise the field's next crop
+  const plotKey = act.key || [field?.kharif, field?.rabi].find((k) => k && byKey[k]);
+  const plot = plotKey ? byKey[plotKey] : null;
 
   const yieldRows = useMemo(() => data?.plots.map((p) => ({
     name: crop(p.crop),
@@ -119,42 +133,58 @@ export default function FarmPage({ fieldForm }) {
   const monthTick = (iso) => fmtDate(iso, { month: "short" });
   const monthStarts = data ? data.dates.filter((iso) => iso.endsWith("-01")) : [];
 
+  // Jump to the worst day of a disaster so the farmer sees it, then play from there
+  const watchScenario = (sc) => {
+    set("scenario", sc);
+    const start = { heatwave: 100, flood: 90, drought: 60 }[sc];
+    if (start != null) { setDay(start); setPlaying(true); }
+  };
+
+  const wx = data ? { rain: data.weather.scenario.rain[d] ?? 0, tmax: data.weather.scenario.tmax[d] ?? 0 } : null;
+  const alert = wx && (wx.tmax >= 44 ? ["heat", t("fx_heat", { t: Math.round(wx.tmax) })]
+    : wx.rain >= 40 ? ["storm", t("fx_storm", { mm: Math.round(wx.rain) })]
+      : wx.rain >= 5 ? ["rain", t("fx_rain", { mm: Math.round(wx.rain) })] : null);
+
   return (
     <div className="page page-wide">
       <PageHeader title={t("farmTitle")} lead={t("farmLead")} />
 
-      {/* ---------------- controls ---------------- */}
-      <Panel className="farm-controls">
-        <div className="farm-controls-grid">
-          <fieldset className="field">
-            <legend className="field-label">{t("scenarioLabel")}</legend>
-            <div className="chips">
-              {SCENARIOS.map((s) => (
-                <button key={s} type="button" className={`chip chip-sc chip-sc-${s}`}
-                        aria-pressed={settings.scenario === s} onClick={() => set("scenario", s)}>
-                  {t(`sc_${s}`)}
-                </button>
-              ))}
-            </div>
-            <p className="field-help">{t(`scDesc_${settings.scenario}`)}</p>
-            {settings.scenario === "custom" && (
-              <div className="sliders sliders-tight">
-                <label className="field">
-                  <span className="field-label">{t("tempChange")}
-                    <bdi className="num">{settings.temp_offset > 0 ? "+" : ""}{settings.temp_offset} °C</bdi></span>
-                  <input type="range" min="-3" max="8" step="0.5" value={settings.temp_offset}
-                         onChange={(e) => set("temp_offset", +e.target.value)} />
-                </label>
-                <label className="field">
-                  <span className="field-label">{t("rainChangeLabel")}
-                    <bdi className="num">{settings.rain_pct}%</bdi></span>
-                  <input type="range" min="0" max="250" step="10" value={settings.rain_pct}
-                         onChange={(e) => set("rain_pct", +e.target.value)} />
-                </label>
-              </div>
-            )}
-          </fieldset>
+      {/* ---------------- 1. the farmer's own fields ---------------- */}
+      <FieldBoard fields={fields} setFields={(f) => set("fields", f)} data={data}
+                  selected={sel} onSelect={setSelected} unit={unit.v} />
 
+      {/* ---------------- 2. the weather to test ---------------- */}
+      <Panel className="farm-controls">
+        <h2 className="step-title">{t("pickWeather")}</h2>
+        <div className="scenario-tiles" role="group" aria-label={t("scenarioLabel")}>
+          {SCENARIOS.map((s) => (
+            <button key={s} type="button" className={`scenario-tile sc-${s}`}
+                    aria-pressed={settings.scenario === s} onClick={() => watchScenario(s)}>
+              <span className="scenario-emoji" aria-hidden="true">{SCENARIO_ICON[s]}</span>
+              <span className="scenario-name">{t(`sc_${s}`)}</span>
+            </button>
+          ))}
+        </div>
+        <p className="field-help">{t(`scDesc_${settings.scenario}`)}</p>
+        {settings.scenario === "custom" && (
+          <div className="sliders sliders-tight">
+            <label className="field">
+              <span className="field-label">{t("tempChange")}
+                <bdi className="num">{settings.temp_offset > 0 ? "+" : ""}{settings.temp_offset} °C</bdi></span>
+              <input type="range" min="-3" max="8" step="0.5" value={settings.temp_offset}
+                     onChange={(e) => set("temp_offset", +e.target.value)} />
+            </label>
+            <label className="field">
+              <span className="field-label">{t("rainChangeLabel")}
+                <bdi className="num">{settings.rain_pct}%</bdi></span>
+              <input type="range" min="0" max="250" step="10" value={settings.rain_pct}
+                     onChange={(e) => set("rain_pct", +e.target.value)} />
+            </label>
+          </div>
+        )}
+
+        <details className="more-settings">
+          <summary>{t("moreSettings")}</summary>
           <div className="farm-controls-side">
             <fieldset className="field">
               <legend className="field-label">{t("irrigationMode")}</legend>
@@ -185,37 +215,27 @@ export default function FarmPage({ fieldForm }) {
                        onChange={(e) => set("lon", +e.target.value)} />
               </label>
             </div>
-            {fieldForm && (
-              <Button variant="ghost" icon={MapPin}
-                      onClick={() => setSettings((s) => ({ ...s, lat: fieldForm.lat, lon: fieldForm.lon }))}>
-                {t("useMyField")}
-              </Button>
-            )}
+            <div className="row-actions">
+              {fieldForm && (
+                <Button variant="ghost" icon={MapPin}
+                        onClick={() => setSettings((s) => ({ ...DEFAULTS, ...s, lat: fieldForm.lat, lon: fieldForm.lon }))}>
+                  {t("useMyField")}
+                </Button>
+              )}
+              <Button variant="ghost" icon={RotateCcw} onClick={() => setSettings(DEFAULTS)}>{t("resetFarm")}</Button>
+            </div>
           </div>
-        </div>
+        </details>
       </Panel>
 
       {error && <div className="notice">{error}</div>}
 
       {data && (
         <>
-          {/* ---------------- farmer summary ---------------- */}
-          <section className="summary" aria-label={t("summaryLabel")}>
-            <div className="summary-head">
-              <Headline data={data} />
-              <div className="segmented segmented-sm" role="group" aria-label={t("unitLabel")}>
-                {["maund", "tha"].map((u) => (
-                  <button key={u} type="button" aria-pressed={unit.v === u} onClick={() => setUnit({ v: u })}>
-                    {t(`unit_${u}`)}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="muted small">{t("cardsHint")}</p>
-            <CropStatusCards data={data} selected={selected} onSelect={setSelected} unit={unit.v} />
-          </section>
+          {/* ---------------- 3. what it would cost ---------------- */}
+          <ShockPanel data={data} fields={fields} scenario={settings.scenario} onScenario={watchScenario} />
 
-          {/* ---------------- viewport + details ---------------- */}
+          {/* ---------------- 4. watch it happen ---------------- */}
           <div className="farm-main">
             <Panel className="farm-viewport">
               <div className="viewport-bar">
@@ -239,14 +259,21 @@ export default function FarmPage({ fieldForm }) {
 
               <div className="viewport-stage">
                 {view === "2d" ? (
-                  <Farm2D plots={data.plots} day={d} metric={metric} selected={selected} onSelect={setSelected} />
+                  <Farm2D fields={fields} plots={data.plots} day={d} metric={metric} selected={sel} onSelect={setSelected} />
                 ) : (
                   <WebGLGuard fallback={<div className="notice">{t("no3d")}</div>}>
                     <Suspense fallback={<BrandLoader size="panel" messages={[t("fm_3d")]} />}>
-                      <Farm3D plots={data.plots} day={d} selected={selected} onSelect={setSelected} />
+                      <Farm3D fields={fields} plots={data.plots} weather={data.weather.scenario}
+                              day={d} selected={sel} onSelect={setSelected} />
                     </Suspense>
                   </WebGLGuard>
                 )}
+                <div className="wx-ticker" aria-live="polite">
+                  <span><bdi>{fmtDate(data.dates[d], { day: "numeric", month: "short" })}</bdi></span>
+                  <span>🌡️ <bdi className="num">{Math.round(wx.tmax)}°C</bdi></span>
+                  <span>🌧️ <bdi className="num">{Math.round(wx.rain)} {t("mm")}</bdi></span>
+                </div>
+                {alert && <div className={`wx-alert wx-${alert[0]}`} role="status">{alert[1]}</div>}
               </div>
 
               <div className="timeline">
@@ -268,21 +295,37 @@ export default function FarmPage({ fieldForm }) {
             </Panel>
 
             <div className="farm-side">
-              <label className="crop-picker">
-                <span className="field-label">{t("pickCrop")}</span>
-                <select className="select" value={selected} onChange={(e) => setSelected(e.target.value)}>
-                  {groupPlots(data.plots).map((g) => (
-                    <optgroup key={g.key} label={t(`${g.key}Block`)}>
-                      {g.plots.map((p) => <option key={p.crop} value={p.crop}>{crop(p.crop)}</option>)}
-                    </optgroup>
-                  ))}
-                </select>
-              </label>
-              {plot && <CropDetail plot={plot} day={d} fmtDate={fmtDate} unit={unit.v} />}
+              <div className="segmented field-tabs" role="group" aria-label={t("pickField")}>
+                {fields.map((f, i) => (
+                  <button key={i} type="button" aria-pressed={sel === i} onClick={() => setSelected(i)}>
+                    {t("fieldN", { n: i + 1 })}
+                  </button>
+                ))}
+              </div>
+              {plot ? (
+                <>
+                  <p className="side-crop">
+                    <span aria-hidden="true">{CROP_ICON[plot.crop]}</span> {crop(plot.crop)}
+                    {!act.key && <span className="muted small"> · {t("bareNow")}</span>}
+                  </p>
+                  <CropDetail plot={plot} day={d} fmtDate={fmtDate} unit={unit.v} />
+                </>
+              ) : <Panel><p className="muted">{t("pickACrop")}</p></Panel>}
             </div>
           </div>
 
-          <SeasonCalendar data={data} day={d} onDay={(v) => { setPlaying(false); setDay(v); }} />
+          <SeasonCalendar data={data} fields={fields} day={d} onDay={(v) => { setPlaying(false); setDay(v); }} />
+
+          <div className="summary-head">
+            <Headline data={data} />
+            <div className="segmented segmented-sm" role="group" aria-label={t("unitLabel")}>
+              {["maund", "tha"].map((u) => (
+                <button key={u} type="button" aria-pressed={unit.v === u} onClick={() => setUnit({ v: u })}>
+                  {t(`unit_${u}`)}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="detail-grid">
             <HarvestOutlook data={data} unit={unit.v} />
@@ -317,7 +360,8 @@ export default function FarmPage({ fieldForm }) {
               </div>
             </Panel>
 
-            <Panel title={`${t("seasonCurve")}: ${crop(selected)}`}>
+            {plot && (
+            <Panel title={`${t("seasonCurve")}: ${crop(plot.crop)}`}>
               <div className="segmented segmented-sm">
                 {CURVES.map((c) => (
                   <button key={c} type="button" aria-pressed={curve === c} onClick={() => setCurve(c)}>
@@ -341,6 +385,7 @@ export default function FarmPage({ fieldForm }) {
                 </ResponsiveContainer>
               </div>
             </Panel>
+            )}
           </div>
 
           <Panel title={t("weatherTitle")}>
@@ -364,6 +409,7 @@ export default function FarmPage({ fieldForm }) {
           </Panel>
             </div>
           </details>
+          <p className="judgement-note">🤝 {t("judgementNote")}</p>
           <p className="muted small">{t("modelNoteFarm")}</p>
         </>
       )}
