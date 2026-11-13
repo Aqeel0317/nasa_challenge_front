@@ -1717,3 +1717,16 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
   .fc-week { gap: .2rem; }
   .fc-ic { font-size: 1.15rem; }
 }
+
+/* auto weather */
+.sc-auto[aria-pressed="true"] { border-color: #2f7dd1; background: linear-gradient(160deg, #dcecfb, #c4def7); color: #173a5e; }
+@media (prefers-color-scheme: dark) { .sc-auto[aria-pressed="true"] { background: #1c3550; color: #cfe5fb; border-color: #6aa9e6; } }
+.auto-note { padding: .6rem .85rem; border-radius: 12px; background: var(--rabi-soft); color: var(--rabi-ink); font-weight: 600; }
+.advice-now { display: flex; align-items: center; gap: .6rem; padding: .7rem .9rem; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); font-size: 1.02rem; }
+.advice-now > span:first-child { font-size: 1.5rem; }
+.now-heatwave { border-color: var(--risk); }
+.now-flood { border-color: var(--rabi); }
+.now-drought { border-color: var(--watch); }
+.now-normal { border-color: var(--good); }
+@media (max-width: 760px) { .scenario-tiles { grid-auto-columns: 32%; } }
+@media (min-width: 761px) { .scenario-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }

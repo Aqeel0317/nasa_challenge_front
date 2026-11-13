@@ -83,3 +83,21 @@ export const QUICK_PLACES = [
   { name: "D.I. Khan", ur: "ڈیرہ اسماعیل خان", lat: 31.83, lon: 70.9 },
   { name: "Gujranwala", ur: "گوجرانوالہ", lat: 32.16, lon: 74.19 },
 ];
+
+// Pick the scenario that matches this week's real weather: the 7-day forecast plus
+// the last two weeks of NASA POWER. Returns the scenario and why it was chosen.
+export function autoScenario(fc, nasaDays = []) {
+  const d = fc?.daily;
+  const hotFc = d ? d.temperature_2m_max.filter((x) => x >= 40).length : 0;
+  const hotNasa = nasaDays.slice(-7).filter((x) => x.tmax >= 40).length;
+  const rain7 = d ? d.precipitation_sum.reduce((a, b) => a + (b || 0), 0) : 0;
+  const rainMax = d ? Math.max(0, ...d.precipitation_sum.map((x) => x || 0)) : 0;
+  const pastRain = nasaDays.reduce((a, x) => a + (x.rain || 0), 0);
+  const soil = [...nasaDays].reverse().find((x) => x.soil != null)?.soil;
+  if (hotFc || hotNasa >= 3) return { sc: "heatwave", why: "auto_heat", p: { n: Math.max(hotFc, hotNasa) } };
+  if (rain7 >= 50 || rainMax >= 30) return { sc: "flood", why: "auto_flood", p: { mm: Math.round(rain7) } };
+  if (nasaDays.length >= 10 && pastRain < 2 && soil != null && soil < 30 && rain7 < 5) {
+    return { sc: "drought", why: "auto_drought", p: { n: nasaDays.length, pct: soil } };
+  }
+  return { sc: "normal", why: "auto_normal", p: {} };
+}

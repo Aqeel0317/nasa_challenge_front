@@ -13,7 +13,8 @@ import BrandLoader, { MiniBars } from "../components/BrandLoader.jsx";
 import { CROP_ICON, METRICS, STAGE_KEYS, activeCrop, stageOf } from "../components/farm/farmUtils.js";
 import { HarvestOutlook, Headline, SeasonCalendar, WaterTank, WeatherByMonth, toUnit } from "../components/farm/FarmerDashboard.jsx";
 import { FieldBoard, SCENARIO_ICON, ShockPanel } from "../components/farm/FieldBoard.jsx";
-import LivePanel from "../components/farm/LivePanel.jsx";
+import LivePanel, { useLive } from "../components/farm/LivePanel.jsx";
+import { autoScenario, useForecast } from "../weather.js";
 import LocationPicker from "../components/farm/LocationPicker.jsx";
 import FarmAdvice, { HowSteps } from "../components/farm/FarmAdvice.jsx";
 
@@ -58,6 +59,15 @@ export default function FarmPage({ fieldForm }) {
   const set = (k, v) => setSettings((s) => ({ ...DEFAULTS, ...s, [k]: v }));
   const fields = settings.fields;
   const sel = Math.min(selected, fields.length - 1);
+
+  // Auto weather: pick the scenario that matches this week's real weather at the farm.
+  const fc = useForecast(settings.lat, settings.lon);
+  const { live: liveNasa } = useLive(settings.lat, settings.lon);
+  const auto = useMemo(() => (fc ? autoScenario(fc, liveNasa?.data?.weather?.days || []) : null), [fc, liveNasa]);
+  const isAuto = settings.scenarioMode !== "manual";
+  useEffect(() => {
+    if (isAuto && auto && auto.sc !== settings.scenario) setSettings((s) => ({ ...DEFAULTS, ...s, scenario: auto.sc }));
+  }, [isAuto, auto?.sc]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Field size only changes the money, so it does not re-run the simulation.
   const requestKey = JSON.stringify(farmRequest(settings));
@@ -139,7 +149,7 @@ export default function FarmPage({ fieldForm }) {
 
   // Jump to the worst day of a disaster so the farmer sees it, then play from there
   const watchScenario = (sc) => {
-    set("scenario", sc);
+    setSettings((s) => ({ ...DEFAULTS, ...s, scenario: sc, scenarioMode: "manual" }));
     const start = { heatwave: 100, flood: 90, drought: 60 }[sc];
     if (start != null) { setDay(start); setPlaying(true); }
   };
@@ -165,7 +175,7 @@ export default function FarmPage({ fieldForm }) {
                       onPick={(p) => setSettings((s) => ({ ...DEFAULTS, ...s, lat: p.lat, lon: p.lon, place: p.name }))} />
       <LivePanel lat={settings.lat} lon={settings.lon} place={settings.place} />
 
-      {data && <FarmAdvice data={data} fields={fields} scenario={settings.scenario} onScenario={watchScenario} />}
+      {data && <FarmAdvice data={data} fields={fields} scenario={settings.scenario} onScenario={watchScenario} now={auto} />}
 
       {busy && data && (
         <div className="refresh-pill" role="status"><MiniBars label={t("refreshing")} /> <span>{stale ? t("staleNote") : t("refreshing")}</span></div>
@@ -179,14 +189,22 @@ export default function FarmPage({ fieldForm }) {
       <Panel className="farm-controls">
         <h2 className="step-title">{t("pickWeather")}</h2>
         <div className="scenario-tiles" role="group" aria-label={t("scenarioLabel")}>
+          <button type="button" className="scenario-tile sc-auto" aria-pressed={isAuto}
+                  onClick={() => setSettings((s) => ({ ...DEFAULTS, ...s, scenarioMode: "auto" }))}>
+            <span className="scenario-emoji" aria-hidden="true">🛰️</span>
+            <span className="scenario-name">{t("sc_auto")}</span>
+          </button>
           {SCENARIOS.map((s) => (
             <button key={s} type="button" className={`scenario-tile sc-${s}`}
-                    aria-pressed={settings.scenario === s} onClick={() => watchScenario(s)}>
+                    aria-pressed={!isAuto && settings.scenario === s} onClick={() => watchScenario(s)}>
               <span className="scenario-emoji" aria-hidden="true">{SCENARIO_ICON[s]}</span>
               <span className="scenario-name">{t(`sc_${s}`)}</span>
             </button>
           ))}
         </div>
+        {isAuto && auto && (
+          <p className="auto-note">🛰️ {t("autoChosen", { sc: t(`sc_${auto.sc}`) })} {t(auto.why, auto.p)}</p>
+        )}
         <p className="field-help">{t(`scDesc_${settings.scenario}`)}</p>
         {settings.scenario === "custom" && (
           <div className="sliders sliders-tight">

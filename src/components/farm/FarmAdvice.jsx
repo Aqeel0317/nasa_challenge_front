@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Volume2, Square } from "lucide-react";
 import { useI18n } from "../../i18n.jsx";
-import { NITROGEN_FIXERS, bareDays, formatRs } from "./farmUtils.js";
+import { NITROGEN_FIXERS, PRICE_PER_MAUND, bareDays, formatRs } from "./farmUtils.js";
 import { fieldValue } from "./FieldBoard.jsx";
 
 // "Your farm at a glance": one verdict, the biggest money risk, and a few plain
@@ -34,7 +34,10 @@ export function buildAdvice(data, fields, t, crop, lang) {
     const weak = share[share.length - 1];
     // Only suggest a rotation that also earns well in a normal year, not just one that
     // loses little because it earns little.
-    const best = share.find((x) => x.i !== weak.i && x.perAcre >= 0.7 * weak.perAcre);
+    // ...and both of whose crops are sold (green manure earns nothing, so its
+    // "small loss" would be misleading).
+    const sold = (f) => [f.kharif, f.rabi].filter(Boolean).every((k) => (PRICE_PER_MAUND[k] ?? 0) > 0);
+    const best = share.find((x) => x.i !== weak.i && x.perAcre >= 0.7 * weak.perAcre && sold(ready[x.i]));
     if (best && weak.pct - best.pct >= 5) {
       tips.push({ icon: "🛡️", text: t("adv_rotation", {
         weak: label(weak.i), weakRot: rotation(ready[weak.i]), weakPct: weak.pct,
@@ -84,11 +87,12 @@ function useSpeech(lang) {
   return { supported, speaking, noVoice, speak };
 }
 
-export default function FarmAdvice({ data, fields, scenario, onScenario }) {
+export default function FarmAdvice({ data, fields, scenario, onScenario, now }) {
   const { t, crop, lang } = useI18n();
   const a = buildAdvice(data, fields, t, crop, lang);
   const { supported, speaking, noVoice, speak } = useSpeech(lang);
-  const spoken = [t(`verdictTitle_${a.level}`), a.headline, ...a.tips.map((x) => x.text)].join(". ");
+  const nowText = now ? `${t("thisWeek")}: ${t(`now_${now.sc}`)}` : null;
+  const spoken = [nowText, t(`verdictTitle_${a.level}`), a.headline, ...a.tips.map((x) => x.text)].filter(Boolean).join(". ");
 
   return (
     <section className={`advice advice-${a.level}`} aria-labelledby="advice-title">
@@ -107,6 +111,13 @@ export default function FarmAdvice({ data, fields, scenario, onScenario }) {
         )}
       </div>
       {noVoice && <p className="advice-note">{t("noUrduVoice")}</p>}
+      {now && (
+        <p className={`advice-now now-${now.sc}`}>
+          <span aria-hidden="true">{now.sc === "normal" ? "🌤️" : ICON[now.sc]}</span>
+          <span><strong>{t("thisWeek")}:</strong> {t(`now_${now.sc}`)}</span>
+        </p>
+      )}
+      <p className="advice-sub">{t("riskYear")}</p>
 
       <div className="advice-meter" role="group" aria-label={t("shockTitle")}>
         {a.losses.slice().sort((x, y) => SHOCKS.indexOf(x.sc) - SHOCKS.indexOf(y.sc)).map((l) => (

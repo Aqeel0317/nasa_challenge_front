@@ -8,7 +8,7 @@ const now = new Date();
 export const LAST_YEAR = now.getFullYear() - (now.getMonth() >= 5 ? 1 : 2);
 
 export const FARM_DEFAULTS = {
-  lat: 31.42, lon: 73.08, place: "Faisalabad", year: LAST_YEAR, scenario: "heatwave",
+  lat: 31.42, lon: 73.08, place: "Faisalabad", year: LAST_YEAR, scenario: "normal", scenarioMode: "auto",
   irrigation: "deficit", temp_offset: 2, rain_pct: 60, fields: DEFAULT_FIELDS,
 };
 
