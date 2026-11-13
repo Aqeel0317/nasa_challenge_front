@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#24583a" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2324583a'/><path d='M7 22c5-2 13-2 18 0M7 17c5-2 13-2 18 0M7 12c5-2 13-2 18 0' stroke='%23d4a23a' stroke-width='2.4' fill='none' stroke-linecap='round'/></svg>" />
+    <title>آپ کا کھیت – Aap ka Khet</title>
+    <!--
+      Splash screen. It is plain HTML and CSS inside #root, so it shows the moment
+      the page arrives, before any JavaScript downloads. React replaces it on start-up.
+    -->
+    <style>
+      html, body { margin: 0; background: #f3f5f2; }
+      .splash {
+        min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 22px;
+        font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: #17231b;
+      }
+      .splash-logo { width: 76px; height: 76px; }
+      .splash-name { font-family: "Noto Nastaliq Urdu", "Noto Naskh Arabic", serif; font-size: 30px; font-weight: 700; margin: -6px 0 -14px; line-height: 2; }
+      .splash-latin { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: #5e6c62; margin: 0; }
+      .splash-bars { display: grid; gap: 7px; width: 168px; }
+      .splash-bars span { display: block; height: 7px; border-radius: 4px; background: #dde6da; overflow: hidden; position: relative; }
+      .splash-bars span::after {
+        content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 45%; border-radius: 4px;
+        background: #24583a; animation: sow 1.4s ease-in-out infinite; transform: translateX(-110%);
+      }
+      .splash-bars span:nth-child(2)::after { background: #d4a23a; animation-delay: .18s; }
+      .splash-bars span:nth-child(3)::after { background: #5f8fab; animation-delay: .36s; }
+      .splash-text { font-size: 14px; color: #5e6c62; margin: 0; }
+      .splash-text[lang="ur"] { font-family: "Noto Nastaliq Urdu", serif; font-size: 16px; line-height: 2; }
+      @keyframes sow { 0% { transform: translateX(-110%); } 100% { transform: translateX(240%); } }
+      @media (prefers-color-scheme: dark) {
+        html, body { background: #142019; }
+        .splash { color: #e6eee7; }
+        .splash-bars span { background: #263d2f; }
+        .splash-bars span::after { background: #6fbf8a; }
+        .splash-text { color: #9eb0a3; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .splash-bars span::after { animation: none; transform: none; width: 60%; }
+      }
+    </style>
+    <script>
+      // Apply the saved language before anything paints, so Urdu users never see a flash of English.
+      try {
+        if (localStorage.getItem("rotaterra-lang") === "ur") {
+          document.documentElement.lang = "ur";
+          document.documentElement.dir = "rtl";
+        }
+      } catch (e) { /* storage blocked */ }
+    </script>
+  </head>
+  <body>
+    <div id="root">
+      <div class="splash" role="status" aria-live="polite">
+        <svg class="splash-logo" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#24583a" />
+          <path d="M7 22c5-2 13-2 18 0M7 17c5-2 13-2 18 0M7 12c5-2 13-2 18 0"
+                stroke="#d4a23a" stroke-width="2.4" fill="none" stroke-linecap="round" />
+        </svg>
+        <p class="splash-name" lang="ur" dir="rtl">آپ کا کھیت</p>
+        <p class="splash-latin">Aap ka Khet</p>
+        <div class="splash-bars" aria-hidden="true"><span></span><span></span><span></span></div>
+        <p class="splash-text" id="splash-text">Loading your farm planner</p>
+      </div>
+    </div>
+    <script>
+      if (document.documentElement.lang === "ur") {
+        var s = document.getElementById("splash-text");
+        s.textContent = "آپ کا فارم پلانر لوڈ ہو رہا ہے";
+        s.setAttribute("lang", "ur");
+      }
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
