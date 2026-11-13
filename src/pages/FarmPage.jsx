@@ -14,6 +14,8 @@ import { CROP_ICON, METRICS, STAGE_KEYS, activeCrop, stageOf } from "../componen
 import { HarvestOutlook, Headline, SeasonCalendar, WaterTank, WeatherByMonth, toUnit } from "../components/farm/FarmerDashboard.jsx";
 import { FieldBoard, SCENARIO_ICON, ShockPanel } from "../components/farm/FieldBoard.jsx";
 import LivePanel from "../components/farm/LivePanel.jsx";
+import LocationPicker from "../components/farm/LocationPicker.jsx";
+import FarmAdvice, { HowSteps } from "../components/farm/FarmAdvice.jsx";
 
 const Farm3D = lazy(() => import("../components/farm/Farm3D.jsx"));
 
@@ -47,7 +49,10 @@ export default function FarmPage({ fieldForm }) {
   const [selected, setSelected] = useState(0);
   const [day, setDay] = useState(105);
   const [playing, setPlaying] = useState(false);
-  const [unit, setUnit] = useStoredState("rotaterra-unit", { v: lang === "ur" ? "maund" : "tha" });
+  const [unit, setUnit] = useStoredState("rotaterra-unit", { v: "maund" });
+  // Simple shows what a farmer needs; Detailed adds the expert charts.
+  const [mode, setMode] = useStoredState("aapkakhet-mode", { v: "simple" });
+  const simple = mode.v !== "detailed";
   const runId = useRef(0);
 
   const set = (k, v) => setSettings((s) => ({ ...DEFAULTS, ...s, [k]: v }));
@@ -146,9 +151,21 @@ export default function FarmPage({ fieldForm }) {
 
   return (
     <div className="page page-wide">
-      <PageHeader title={t("farmTitle")} lead={t("farmLead")} />
+      <PageHeader title={t("farmTitle")} lead={t("farmLead")} actions={
+        <div className="segmented mode-switch" role="group" aria-label={t("modeLabel")}>
+          {["simple", "detailed"].map((m) => (
+            <button key={m} type="button" aria-pressed={(simple ? "simple" : "detailed") === m}
+                    onClick={() => setMode({ v: m })}>{t(`mode_${m}`)}</button>
+          ))}
+        </div>
+      } />
+      <HowSteps />
 
-      <LivePanel lat={settings.lat} lon={settings.lon} />
+      <LocationPicker place={settings.place} lat={settings.lat} lon={settings.lon}
+                      onPick={(p) => setSettings((s) => ({ ...DEFAULTS, ...s, lat: p.lat, lon: p.lon, place: p.name }))} />
+      <LivePanel lat={settings.lat} lon={settings.lon} place={settings.place} />
+
+      {data && <FarmAdvice data={data} fields={fields} scenario={settings.scenario} onScenario={watchScenario} />}
 
       {busy && data && (
         <div className="refresh-pill" role="status"><MiniBars label={t("refreshing")} /> <span>{stale ? t("staleNote") : t("refreshing")}</span></div>
@@ -212,12 +229,12 @@ export default function FarmPage({ fieldForm }) {
               <label className="field">
                 <span className="field-label">{t("latitude")}</span>
                 <input type="number" step="0.01" dir="ltr" value={settings.lat}
-                       onChange={(e) => set("lat", +e.target.value)} />
+                       onChange={(e) => setSettings((s) => ({ ...DEFAULTS, ...s, lat: +e.target.value, place: "" }))} />
               </label>
               <label className="field">
                 <span className="field-label">{t("longitude")}</span>
                 <input type="number" step="0.01" dir="ltr" value={settings.lon}
-                       onChange={(e) => set("lon", +e.target.value)} />
+                       onChange={(e) => setSettings((s) => ({ ...DEFAULTS, ...s, lon: +e.target.value, place: "" }))} />
               </label>
             </div>
             <div className="row-actions">
@@ -321,6 +338,7 @@ export default function FarmPage({ fieldForm }) {
 
           <SeasonCalendar data={data} fields={fields} day={d} onDay={(v) => { setPlaying(false); setDay(v); }} />
 
+          {!simple && (<>
           <div className="summary-head">
             <Headline data={data} />
             <div className="segmented segmented-sm" role="group" aria-label={t("unitLabel")}>
@@ -414,6 +432,7 @@ export default function FarmPage({ fieldForm }) {
           </Panel>
             </div>
           </details>
+          </>)}
           <p className="judgement-note">🤝 {t("judgementNote")}</p>
           <p className="muted small">{t("modelNoteFarm")}</p>
         </>

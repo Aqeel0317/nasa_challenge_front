@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getLive } from "../../api.js";
 import { useI18n } from "../../i18n.jsx";
+import { useForecast, weatherLook } from "../../weather.js";
 
 // Live from NASA: the last days of NASA POWER weather at the field, and open natural
 // events from NASA EONET in the region. The last answer is kept in the browser so it
@@ -40,17 +41,66 @@ export function useLive(lat, lon) {
   return { live, failed };
 }
 
-export default function LivePanel({ lat, lon }) {
+// Today's weather and the week ahead (Open-Meteo forecast), with practical alerts.
+function TodayBlock({ fc }) {
+  const { t, lang } = useI18n();
+  const c = fc.current, d = fc.daily;
+  const locale = lang === "ur" ? "ur-PK" : "en-GB";
+  const [icon, word] = weatherLook(c.weather_code, c.is_day);
+  const rain3 = d.precipitation_sum.slice(0, 3).reduce((a, b) => a + (b || 0), 0);
+  const hotAhead = d.temperature_2m_max.filter((x) => x >= 40).length;
+  const tips = [];
+  if (rain3 >= 5) tips.push(["🌧️", t("fc_rain_alert", { mm: Math.round(rain3) })]);
+  if (hotAhead) tips.push(["🔥", t("fc_heat_alert", { n: hotAhead })]);
+  if (!rain3 && !hotAhead && d.precipitation_probability_max.every((p) => (p ?? 0) < 20)) tips.push(["☀️", t("fc_dry_alert")]);
+  return (
+    <div className="today">
+      <div className="today-now">
+        <span className="today-ic" aria-hidden="true">{icon}</span>
+        <div>
+          <p className="today-k">{t("todayLabel")}</p>
+          <p className="today-t"><bdi>{Math.round(c.temperature_2m)}°C</bdi></p>
+          <p className="today-w">{t(word)}</p>
+        </div>
+        <ul className="today-facts">
+          <li>🌡️ {t("feelsLike", { t: Math.round(c.apparent_temperature) })}</li>
+          <li>💧 {t("humidity", { pct: Math.round(c.relative_humidity_2m) })}</li>
+          <li>💨 {t("wind", { kmh: Math.round(c.wind_speed_10m) })}</li>
+          <li>☔ {t("rainChance", { pct: d.precipitation_probability_max[0] ?? 0 })}</li>
+        </ul>
+      </div>
+      <div className="fc-week" dir="ltr" aria-label={t("next7")}>
+        {d.time.map((iso, i) => {
+          const [ic] = weatherLook(d.weather_code[i]);
+          return (
+            <div key={iso} className={`fc-day ${d.temperature_2m_max[i] >= 40 ? "is-hot" : ""}`}>
+              <span className="fc-d">{i === 0 ? t("todayShort") : new Date(`${iso}T00:00:00`).toLocaleDateString(locale, { weekday: "short" })}</span>
+              <span className="fc-ic" aria-hidden="true">{ic}</span>
+              <span className="fc-max"><bdi>{Math.round(d.temperature_2m_max[i])}°</bdi></span>
+              <span className="fc-min"><bdi>{Math.round(d.temperature_2m_min[i])}°</bdi></span>
+              <span className="fc-p">{(d.precipitation_probability_max[i] ?? 0) >= 20 ? `${d.precipitation_probability_max[i]}%` : ""}</span>
+            </div>
+          );
+        })}
+      </div>
+      {tips.map(([ic, txt]) => <p key={txt} className="fc-alert">{ic} {txt}</p>)}
+      <p className="live-meta">{t("fc_src")}</p>
+    </div>
+  );
+}
+
+export default function LivePanel({ lat, lon, place }) {
   const { t, lang } = useI18n();
   const { live, failed } = useLive(lat, lon);
+  const fc = useForecast(lat, lon);
 
   const locale = lang === "ur" ? "ur-PK" : "en-GB";
   const fmt = (iso, o = { day: "numeric", month: "short" }) => new Date(`${iso}T00:00:00`).toLocaleDateString(locale, o);
   const days = live?.data?.weather?.days || [];
   const events = live?.data?.events || [];
 
-  if (!live && failed) return null;
-  if (!live) {
+  if (!live && !fc && failed) return null;
+  if (!live && !fc) {
     return (
       <section className="live live-loading" aria-busy="true">
         <span className="live-dot" aria-hidden="true" /> {t("live_loading")}
@@ -71,12 +121,19 @@ export default function LivePanel({ lat, lon }) {
   return (
     <section className="live" aria-labelledby="live-title">
       <header className="live-head">
-        <h2 id="live-title"><span className="live-dot" aria-hidden="true" />{t("live_title")}</h2>
+        <h2 id="live-title"><span className="live-dot" aria-hidden="true" />{t("live_title2")}</h2>
+        {place && <span className="live-place">📍 <bdi>{place}</bdi></span>}
+      </header>
+
+      {fc?.current && fc?.daily && <TodayBlock fc={fc} />}
+
+      <div className="live-sub">
+        <h3>🛰️ {t("live_past")}</h3>
         <span className="live-meta">
           {days.length ? t("live_updated", { date: fmt(days[days.length - 1].date) }) : t("live_off")}
           {" · "}{t("live_src")}
         </span>
-      </header>
+      </div>
 
       {days.length > 0 && (
         <div className="live-body">
