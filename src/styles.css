@@ -1450,3 +1450,71 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
 @media (prefers-reduced-motion: reduce) {
   .lx-year-bar i { transform: scaleX(var(--p, 0)); }
 }
+
+/* ==========================================================================
+   Loaders: the growing-seed mark, shimmer line and pulsing dots
+   ========================================================================== */
+/* restore the plain rotation used by spinners and the tractor wheel */
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.grow-mark { color: var(--canopy); overflow: visible; }
+.grow-mark .gm-track { fill: none; stroke: currentColor; stroke-opacity: .14; stroke-width: 2; }
+.grow-mark .gm-arc { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 22 78;
+  transform-origin: 60px 60px; animation: gm-turn 2.6s cubic-bezier(.5, .1, .5, .9) infinite; }
+.grow-mark .gm-orbit { transform-origin: 60px 60px; animation: gm-turn 3.4s linear infinite; }
+.grow-mark .gm-sat { fill: #e8f9b0; }
+.grow-mark .gm-sat-glow { fill: #c8f56a; opacity: .45; }
+.grow-mark .gm-ground { fill: none; stroke: currentColor; stroke-opacity: .4; stroke-width: 3; stroke-linecap: round; }
+.grow-mark .gm-stem { fill: none; stroke: currentColor; stroke-width: 3.4; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100;
+  animation: gm-stem 2.8s cubic-bezier(.3, .7, .3, 1) infinite; }
+.grow-mark .gm-leaf { fill: currentColor; transform-box: fill-box; transform: scale(0); opacity: 0; }
+.grow-mark .gm-leaf-l { transform-origin: 100% 100%; animation: gm-leaf 2.8s cubic-bezier(.3, 1.4, .5, 1) infinite; }
+.grow-mark .gm-leaf-r { transform-origin: 0% 100%; animation: gm-leaf 2.8s .12s cubic-bezier(.3, 1.4, .5, 1) infinite; fill: #8fd16a; }
+.grow-mark .gm-halo { animation: gm-halo 2.8s ease-in-out infinite; transform-origin: 60px 60px; }
+@keyframes gm-turn { to { transform: rotate(360deg); } }
+@keyframes gm-stem { 0% { stroke-dashoffset: 100; opacity: 1; } 38%, 82% { stroke-dashoffset: 0; opacity: 1; } 96%, 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes gm-leaf { 0%, 30% { transform: scale(0); opacity: 0; } 50%, 82% { transform: scale(1); opacity: 1; } 96%, 100% { transform: scale(1); opacity: 0; } }
+@keyframes gm-halo { 50% { transform: scale(1.08); opacity: .7; } }
+
+.grow-line { position: relative; inline-size: 180px; block-size: 3px; border-radius: 3px; overflow: hidden; background: color-mix(in srgb, var(--canopy) 16%, transparent); }
+.grow-line i { position: absolute; inset: 0; inline-size: 40%; border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--canopy), #c8f56a, transparent); animation: grow-sweep 1.5s cubic-bezier(.4, 0, .2, 1) infinite; }
+@keyframes grow-sweep { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
+
+.grow-dots { display: inline-flex; gap: 4px; }
+.grow-dots i { inline-size: 6px; block-size: 6px; border-radius: 50%; background: currentColor; opacity: .3; animation: grow-dot 1.1s ease-in-out infinite; }
+.grow-dots i:nth-child(2) { animation-delay: .15s; }
+.grow-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes grow-dot { 40% { opacity: 1; transform: translateY(-3px); } }
+
+/* in-app loader */
+.brand-loader { gap: 1rem; }
+.brand-loader-page { min-height: 62vh; background: radial-gradient(40% 40% at 50% 38%, color-mix(in srgb, var(--canopy) 10%, transparent), transparent 70%); }
+.brand-loader-title { font-size: 1.5rem; letter-spacing: -.01em; }
+.brand-loader-msg { color: var(--muted); font-weight: 500; animation: msg-fade .5s ease-out; }
+@keyframes msg-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.brand-loader .logo { animation: none; }
+@media (prefers-color-scheme: dark) { .grow-mark { color: #7fd99a; } }
+
+/* start screen: same dark green night as the landing page */
+.start-page { gap: .9rem; color: #eef7ea; background: radial-gradient(60% 50% at 50% 40%, #14462a 0%, #0a2616 45%, #03100a 85%); }
+.start-page .grow-mark { color: #8fe0a2; }
+.start-page .grow-line { background: rgba(200, 245, 106, .12); margin: .3rem 0 .4rem; }
+.start-page .grow-line i { background: linear-gradient(90deg, transparent, #5fd38a, #c8f56a, transparent); }
+.start-name { color: #c8f56a; text-shadow: 0 0 24px rgba(200, 245, 106, .3); margin-top: -.4rem; }
+.start-latin { color: #a9c4b1; }
+.start-steps li { color: #7fa08a; }
+.start-steps li.is-active { color: #eef7ea; }
+.start-steps li.is-done { color: #9be8b0; }
+.start-tick { border-color: rgba(200, 245, 106, .25); }
+.start-steps li.is-done .start-tick { background: #3ccf7a; border-color: #3ccf7a; color: #03100a; }
+.start-steps li.is-active .start-tick { border-color: #c8f56a; border-top-color: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .grow-mark *, .grow-line i, .grow-dots i { animation: none !important; }
+  .grow-mark .gm-stem { stroke-dashoffset: 0; }
+  .grow-mark .gm-leaf { transform: scale(1); opacity: 1; }
+  .grow-line i { transform: translateX(70%); }
+}
+
+.start-page .start-name { margin: -.2rem 0 -.2rem; line-height: 1.9; }

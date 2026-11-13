@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#24583a" />
+    <meta name="theme-color" content="#0a2616" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2324583a'/><path d='M7 22c5-2 13-2 18 0M7 17c5-2 13-2 18 0M7 12c5-2 13-2 18 0' stroke='%23d4a23a' stroke-width='2.4' fill='none' stroke-linecap='round'/></svg>" />
     <title>آپ کا کھیت – Aap ka Khet</title>
     <!--
@@ -11,34 +11,34 @@
       the page arrives, before any JavaScript downloads. React replaces it on start-up.
     -->
     <style>
-      html, body { margin: 0; background: #f3f5f2; }
+      body { margin: 0; background: #03100a; }
       .splash {
-        min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 22px;
-        font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: #17231b;
+        min-height: 100vh; min-height: 100svh; display: grid; place-content: center; justify-items: center; gap: 14px;
+        font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: #eef7ea;
+        background: radial-gradient(60% 50% at 50% 40%, #14462a 0%, #0a2616 45%, #03100a 85%);
       }
-      .splash-logo { width: 76px; height: 76px; }
-      .splash-name { font-family: "Noto Nastaliq Urdu", "Noto Naskh Arabic", serif; font-size: 30px; font-weight: 700; margin: -6px 0 -14px; line-height: 2; }
-      .splash-latin { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: #5e6c62; margin: 0; }
-      .splash-bars { display: grid; gap: 7px; width: 168px; }
-      .splash-bars span { display: block; height: 7px; border-radius: 4px; background: #dde6da; overflow: hidden; position: relative; }
-      .splash-bars span::after {
-        content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 45%; border-radius: 4px;
-        background: #24583a; animation: sow 1.4s ease-in-out infinite; transform: translateX(-110%);
-      }
-      .splash-bars span:nth-child(2)::after { background: #d4a23a; animation-delay: .18s; }
-      .splash-bars span:nth-child(3)::after { background: #5f8fab; animation-delay: .36s; }
-      .splash-text { font-size: 14px; color: #5e6c62; margin: 0; }
+      .sp-mark { width: 120px; height: 120px; color: #8fe0a2; overflow: visible; }
+      .sp-track { fill: none; stroke: currentColor; stroke-opacity: .14; stroke-width: 2; }
+      .sp-arc { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 22 78; transform-origin: 60px 60px; animation: sp-turn 2.6s cubic-bezier(.5,.1,.5,.9) infinite; }
+      .sp-orbit { transform-origin: 60px 60px; animation: sp-turn 3.4s linear infinite; }
+      .sp-ground { fill: none; stroke: currentColor; stroke-opacity: .4; stroke-width: 3; stroke-linecap: round; }
+      .sp-stem { fill: none; stroke: currentColor; stroke-width: 3.4; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; animation: sp-stem 2.8s cubic-bezier(.3,.7,.3,1) infinite; }
+      .sp-leaf { fill: currentColor; transform-box: fill-box; transform: scale(0); opacity: 0; }
+      .sp-l { transform-origin: 100% 100%; animation: sp-leaf 2.8s cubic-bezier(.3,1.4,.5,1) infinite; }
+      .sp-r { transform-origin: 0% 100%; animation: sp-leaf 2.8s .12s cubic-bezier(.3,1.4,.5,1) infinite; fill: #8fd16a; }
+      .splash-name { font-family: "Noto Nastaliq Urdu", "Noto Naskh Arabic", serif; font-size: 32px; font-weight: 700; margin: -4px 0 -12px; line-height: 2; color: #c8f56a; text-shadow: 0 0 24px rgba(200,245,106,.3); }
+      .splash-latin { font-size: 13px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: #a9c4b1; margin: 0; }
+      .splash-line { position: relative; width: 180px; height: 3px; border-radius: 3px; overflow: hidden; background: rgba(200,245,106,.12); margin: 6px 0; }
+      .splash-line::after { content: ""; position: absolute; inset: 0; width: 40%; border-radius: 3px; background: linear-gradient(90deg, transparent, #5fd38a, #c8f56a, transparent); animation: sp-sweep 1.5s cubic-bezier(.4,0,.2,1) infinite; }
+      .splash-text { font-size: 14px; color: #a9c4b1; margin: 0; }
       .splash-text[lang="ur"] { font-family: "Noto Nastaliq Urdu", serif; font-size: 16px; line-height: 2; }
-      @keyframes sow { 0% { transform: translateX(-110%); } 100% { transform: translateX(240%); } }
-      @media (prefers-color-scheme: dark) {
-        html, body { background: #142019; }
-        .splash { color: #e6eee7; }
-        .splash-bars span { background: #263d2f; }
-        .splash-bars span::after { background: #6fbf8a; }
-        .splash-text { color: #9eb0a3; }
-      }
+      @keyframes sp-turn { to { transform: rotate(360deg); } }
+      @keyframes sp-stem { 0% { stroke-dashoffset: 100; opacity: 1; } 38%, 82% { stroke-dashoffset: 0; opacity: 1; } 96%, 100% { stroke-dashoffset: 0; opacity: 0; } }
+      @keyframes sp-leaf { 0%, 30% { transform: scale(0); opacity: 0; } 50%, 82% { transform: scale(1); opacity: 1; } 96%, 100% { transform: scale(1); opacity: 0; } }
+      @keyframes sp-sweep { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
       @media (prefers-reduced-motion: reduce) {
-        .splash-bars span::after { animation: none; transform: none; width: 60%; }
+        .sp-arc, .sp-orbit, .sp-stem, .sp-leaf, .splash-line::after { animation: none; }
+        .sp-stem { stroke-dashoffset: 0; } .sp-leaf { transform: scale(1); opacity: 1; }
       }
     </style>
     <script>
@@ -54,14 +54,18 @@
   <body>
     <div id="root">
       <div class="splash" role="status" aria-live="polite">
-        <svg class="splash-logo" viewBox="0 0 32 32" aria-hidden="true">
-          <rect width="32" height="32" rx="8" fill="#24583a" />
-          <path d="M7 22c5-2 13-2 18 0M7 17c5-2 13-2 18 0M7 12c5-2 13-2 18 0"
-                stroke="#d4a23a" stroke-width="2.4" fill="none" stroke-linecap="round" />
+        <svg class="sp-mark" viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="48" class="sp-track" />
+          <circle cx="60" cy="60" r="48" class="sp-arc" pathLength="100" />
+          <g class="sp-orbit"><circle cx="60" cy="12" r="7" fill="#c8f56a" opacity=".45" /><circle cx="60" cy="12" r="3.4" fill="#e8f9b0" /></g>
+          <path d="M34 88 Q60 80 86 88" class="sp-ground" />
+          <path d="M60 86 C60 76 60 66 60 50" class="sp-stem" pathLength="100" />
+          <path d="M60 70 C49 69 42 62 41 52 C51 52 59 59 60 70Z" class="sp-leaf sp-l" />
+          <path d="M60 60 C71 59 78 52 79 42 C69 42 61 49 60 60Z" class="sp-leaf sp-r" />
         </svg>
         <p class="splash-name" lang="ur" dir="rtl">آپ کا کھیت</p>
         <p class="splash-latin">Aap ka Khet</p>
-        <div class="splash-bars" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="splash-line" aria-hidden="true"></div>
         <p class="splash-text" id="splash-text">Loading your farm planner</p>
       </div>
     </div>

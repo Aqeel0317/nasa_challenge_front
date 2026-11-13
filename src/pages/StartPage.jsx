@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { getCrops } from "../api.js";
 import { useI18n } from "../i18n.jsx";
-import { Logo } from "../components/Brand.jsx";
+import { GrowMark } from "../components/BrandLoader.jsx";
 
 // Shown after "Get started". It does real work while it is on screen: fetches the
 // crop list and downloads the 3D farm code, so the app opens ready to use.
@@ -30,10 +30,10 @@ export default function StartPage({ onDone }) {
 
   return (
     <div className="start-page" role="status" aria-live="polite">
-      <Logo size={76} />
+      <GrowMark size={120} />
       <p className="start-name" lang="ur" dir="rtl">آپ کا کھیت</p>
       <p className="start-latin">Aap ka Khet</p>
-      <div className="start-bars" aria-hidden="true"><span /><span /><span /></div>
+      <div className="grow-line" aria-hidden="true"><i /></div>
       <ul className="start-steps">
         {STEPS.map((k, i) => (
           <li key={k} className={i < done ? "is-done" : i === done ? "is-active" : ""}>
