@@ -17,6 +17,7 @@ import LivePanel, { useLive } from "../components/farm/LivePanel.jsx";
 import { autoScenario, useForecast } from "../weather.js";
 import LocationPicker from "../components/farm/LocationPicker.jsx";
 import TodayActions from "../components/farm/TodayActions.jsx";
+import Onboarding, { ONBOARD_KEY } from "../components/farm/Onboarding.jsx";
 import FarmAdvice, { HowSteps } from "../components/farm/FarmAdvice.jsx";
 
 const Farm3D = lazy(() => import("../components/farm/Farm3D.jsx"));
@@ -41,6 +42,12 @@ class WebGLGuard extends Component {
 // view "fields": the farmer's fields, disasters, the 3D farm and the season charts.
 export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
   const today = pageView === "today";
+  // First visit: a short welcome to set up the farm (shown once, can be reopened)
+  const [onb, setOnb] = useState(() => {
+    if (pageView !== "today") return null;
+    try { return localStorage.getItem(ONBOARD_KEY) ? null : 0; } catch { return null; }
+  });
+  const closeOnb = () => { try { localStorage.setItem(ONBOARD_KEY, "1"); } catch { /* blocked */ } setOnb(null); };
   const { t, lang, crop } = useI18n();
   const [stored, setSettings] = useStoredState("aapkakhet-farm-v2", DEFAULTS);
   const settings = { ...DEFAULTS, ...stored, fields: stored.fields?.length ? stored.fields : DEFAULTS.fields,
@@ -181,7 +188,12 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
 
   return (
     <div className="page page-wide">
-      <PageHeader title={today ? t("today_pageTitle") : t("farmTitle")} lead={today ? t("today_pageLead") : t("farmLead")} actions={today ? null :
+      <PageHeader title={today ? t("today_pageTitle") : t("farmTitle")} lead={today ? t("today_pageLead") : t("farmLead")} actions={today ? (
+        <div className="today-actions-head">
+          <button type="button" className="btn" onClick={() => setOnb(0)}>✏️ {t("onb_edit")}</button>
+          <button type="button" className="btn btn-quiet" onClick={() => setOnb(3)}>ℹ️ {t("onb_dataLink")}</button>
+        </div>
+      ) :
         <div className="segmented mode-switch" role="group" aria-label={t("modeLabel")}>
           {["simple", "detailed"].map((m) => (
             <button key={m} type="button" aria-pressed={(simple ? "simple" : "detailed") === m}
@@ -190,6 +202,13 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
         </div>
       } />
       {!today && <HowSteps />}
+      {onb != null && (
+        <Onboarding settings={settings} startAt={onb} onClose={closeOnb}
+                    onDone={(patch) => {
+                      setSettings((s) => ({ ...DEFAULTS, ...s, ...patch, fields: patch.fields || s.fields || DEFAULTS.fields }));
+                      closeOnb();
+                    }} />
+      )}
 
       <LocationPicker place={settings.place} lat={settings.lat} lon={settings.lon}
                       onPick={(p) => setSettings((s) => ({ ...DEFAULTS, ...s, lat: p.lat, lon: p.lon, place: p.name }))} />

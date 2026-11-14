@@ -1942,3 +1942,45 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
   .nav-more-list { position: fixed; bottom: calc(4.6rem + env(safe-area-inset-bottom, 0px)); inset-inline-end: .5rem; z-index: 40; margin: 0; padding: .4rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 12px 30px rgba(0, 0, 0, .25); }
   .nav-more-list .nav-item { flex-direction: row; justify-content: flex-start; gap: .6rem; padding: .6rem .8rem; font-size: .9rem; }
 }
+
+/* ---------- first-visit welcome ---------- */
+.onb-backdrop { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 1rem; background: rgba(3, 16, 10, .55); backdrop-filter: blur(3px); animation: pop .25s ease-out; }
+.onb { inline-size: min(100%, 640px); max-block-size: calc(100svh - 2rem); overflow-y: auto; display: grid; gap: 1rem; padding: 1.3rem; border-radius: 22px; background: var(--surface); box-shadow: 0 30px 80px rgba(0, 0, 0, .45); }
+.onb-head { display: flex; align-items: center; justify-content: space-between; }
+.onb-dots { display: flex; gap: .4rem; list-style: none; margin: 0; padding: 0; }
+.onb-dots li { inline-size: 26px; block-size: 6px; border-radius: 6px; background: var(--line); transition: background .2s; }
+.onb-dots li.on { background: var(--canopy); }
+.onb-x { display: grid; place-items: center; inline-size: 2.4rem; block-size: 2.4rem; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); cursor: pointer; color: var(--muted); }
+.onb-step { display: grid; gap: .8rem; animation: msg-fade .35s ease-out; }
+.onb-step h2 { font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif; font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 700; }
+[dir="rtl"] .onb-step h2 { font-family: "Noto Nastaliq Urdu", serif; line-height: 1.9; }
+.onb-kicker { font-weight: 600; color: var(--canopy); }
+.onb-now { padding: .7rem .9rem; border-radius: 12px; background: var(--canopy-soft); font-size: 1.1rem; }
+.onb-rots, .onb-water { display: grid; gap: .5rem; }
+.onb-rots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.onb-rot { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .8rem .9rem; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); cursor: pointer; text-align: start; font: inherit; color: var(--ink); }
+.onb-rot[aria-pressed="true"] { border-color: var(--canopy); background: var(--canopy-soft); }
+.onb-rot-crops { font-weight: 600; }
+.onb-rot-crops i { font-style: normal; color: var(--muted); }
+.onb-badge { flex: none; font-size: .72rem; font-weight: 700; padding: .1rem .5rem; border-radius: 999px; background: var(--kharif-soft); color: var(--kharif-ink); }
+.onb-water .onb-rot { justify-content: flex-start; }
+.onb-water small, .onb-sources small { display: block; color: var(--muted); font-size: .85rem; }
+.onb-big { font-size: 1.8rem; }
+.onb-acres { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-weight: 600; }
+.onb-stepper { display: inline-flex; align-items: center; gap: .8rem; }
+.onb-stepper button { inline-size: 2.6rem; block-size: 2.6rem; border-radius: 50%; border: 1px solid var(--line); background: var(--surface-2); font-size: 1.3rem; cursor: pointer; color: var(--ink); }
+.onb-stepper .num { font-size: 1.4rem; font-weight: 700; min-inline-size: 2ch; text-align: center; }
+.onb-sources { display: grid; gap: .45rem; list-style: none; margin: 0; padding: 0; }
+.onb-sources li { display: flex; align-items: center; gap: .8rem; padding: .6rem .8rem; border-radius: 12px; background: var(--surface-2); }
+.onb-how { padding: .7rem .9rem; border-radius: 12px; background: var(--canopy-soft); color: var(--canopy); font-weight: 600; }
+.onb-foot { display: flex; justify-content: space-between; gap: .6rem; }
+.onb-foot .btn { min-height: 50px; }
+.today-actions-head { display: flex; flex-wrap: wrap; gap: .5rem; }
+@media (max-width: 760px) {
+  .onb-backdrop { place-items: end center; padding: 0; }
+  .onb { border-radius: 22px 22px 0 0; max-block-size: 92svh; }
+  .onb-rots { grid-template-columns: minmax(0, 1fr); }
+  .onb-foot .btn { flex: 1; justify-content: center; }
+  .today-actions-head { inline-size: 100%; }
+  .today-actions-head .btn { flex: 1; justify-content: center; }
+}
