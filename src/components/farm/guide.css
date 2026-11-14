@@ -89,3 +89,5 @@ html.guide-open { scroll-behavior: auto; }
 .onb-head { gap: .4rem; }
 .onb-wave { margin-inline-start: auto; }
 .onb-wave i { background: var(--leaf, #2f9a5c); }
+
+.guide-skiptext { background: none; border: 0; color: #a9c9b0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; font-size: .9rem; padding: .3rem; }

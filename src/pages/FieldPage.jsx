@@ -5,6 +5,7 @@ import {
 import { CloudRain, Droplets, Flame, Sun, ThermometerSun } from "lucide-react";
 import { useI18n } from "../i18n.jsx";
 import Glossary, { Term } from "../components/farm/Glossary.jsx";
+import Sources from "../components/farm/Sources.jsx";
 import { Advanced, Level, PageHeader, Panel } from "../components/ui.jsx";
 
 const AXIS = { fill: "var(--muted)", fontSize: 12 };
@@ -190,6 +191,7 @@ export default function FieldPage({ site }) {
         <FieldCharts site={site} />
       </Advanced>
       <Glossary />
+      <Sources />
     </div>
   );
 }

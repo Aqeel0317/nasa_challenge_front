@@ -147,6 +147,43 @@ function QuickSetup({ go, form, setForm, onSubmit, loading }) {
           </div>
         </section>
 
+        {/* 4. The farm itself: size, soil, how the harvest is sold, equipment */}
+        <section className="panel qs-section" aria-labelledby="qs-q4">
+          <h2 className="qs-q" id="qs-q4">{t("qs_q4")}</h2>
+          <label className="qs-row">
+            <span>{t("farmAcres")}</span>
+            <input className="num qs-num" type="number" inputMode="decimal" min="0.5" max="5000" step="0.5" dir="ltr"
+                   value={form.farm_acres ?? form.acres ?? ""}
+                   onChange={(e) => setForm((f) => ({ ...f, farm_acres: Math.max(0.5, +e.target.value || 0.5) }))} />
+          </label>
+          <p className="qs-sub">{t("soilType")}</p>
+          <div className="chips" role="group" aria-label={t("soilType")}>
+            {["", "sandy", "loam", "clay"].map((k) => (
+              <button key={k || "map"} type="button" className="chip" aria-pressed={(form.soil_texture || "") === k}
+                      onClick={() => setForm((f) => ({ ...f, soil_texture: k || null }))}>{t(k ? `soil_${k}` : "soil_map")}</button>
+            ))}
+          </div>
+          <p className="qs-sub">{t("sellHow")}</p>
+          <div className="chips" role="group" aria-label={t("sellHow")}>
+            {["mandi", "home", "contract"].map((k) => (
+              <button key={k} type="button" className="chip" aria-pressed={form.market === k}
+                      onClick={() => setForm((f) => ({ ...f, market: f.market === k ? null : k }))}>{t(`market_${k}`)}</button>
+            ))}
+          </div>
+          <p className="qs-sub">{t("equipHave")}</p>
+          <div className="chips" role="group" aria-label={t("equipHave")}>
+            {["tractor", "laser_leveller", "tubewell"].map((k) => {
+              const on = (form.equipment || []).includes(k);
+              return (
+                <button key={k} type="button" className="chip" aria-pressed={on}
+                        onClick={() => setForm((f) => ({ ...f, equipment: on ? (f.equipment || []).filter((x) => x !== k) : [...(f.equipment || []), k] }))}>
+                  {on ? "✓ " : ""}{t(`equip_${k}`)}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         <button type="submit" className="btn btn-primary qs-go" disabled={loading}>
           <Search size={20} aria-hidden="true" />
           <span>{loading ? t("qs_going") : t("qs_go")}</span>

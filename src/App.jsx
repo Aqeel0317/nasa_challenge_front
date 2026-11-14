@@ -48,6 +48,8 @@ const ENGINE_NAME = { cotton: "Cotton", rice: "Rice", maize: "Maize", sorghum: "
   wheat: "Wheat", barley: "Barley", chickpea: "Chickpea", lentil: "Lentil", mustard: "Mustard / canola",
   potato: "Potato", berseem: "Berseem clover", oats: "Oats (cover)" };
 const SHARED = ["lat", "lon", "place", "irrigation_mm"];
+// Named soil types -> typical clay and sand (%)
+const TEXTURE = { sandy: { clay: 8, sand: 75 }, loam: { clay: 20, sand: 40 }, clay: { clay: 48, sand: 20 } };
 
 const DEFAULT_FORM = {
   lat: 31.42,          // Faisalabad
@@ -98,7 +100,7 @@ export default function App() {
     setLoading(true);
     setError("");
     go("plans");
-    const { use_soil_test, soil_override, place, acres, ...rest } = form; // eslint-disable-line no-unused-vars
+    const { use_soil_test, soil_override, place, acres, soil_texture, farm_acres, ...rest } = form; // eslint-disable-line no-unused-vars
     // the farmer's own rotation (field 1) is scored too and shown first
     const f1 = profile.fields?.[0];
     const current = f1 ? [f1.kharif, f1.rabi].filter(Boolean).map((k) => ENGINE_NAME[k]).filter(Boolean) : [];
@@ -106,8 +108,12 @@ export default function App() {
       const data = await getRotations({
         ...rest,
         current_rotation: current.length ? current : null,
+        farm_acres: farm_acres || acres || null,
+        equipment: rest.equipment || [],
+        market: rest.market || null,
         allowed_crops: form.allowed_crops?.length ? form.allowed_crops : null,
-        soil_override: use_soil_test ? soil_override : null,
+        // a soil test wins; otherwise a named soil type (sandy / loam / clay) sets the texture
+        soil_override: use_soil_test ? soil_override : (soil_texture ? TEXTURE[soil_texture] : null),
       });
       // the current rotation goes first; remember what the plans were made for
       const rotations = data.current ? [data.current, ...data.rotations] : data.rotations;

@@ -163,14 +163,17 @@ function SplitWords({ text, delay = 0, className = "" }) {
 function CountUp({ text }) {
   const ref = useRef(null);
   const m = text.match(/^([\d.]+)(.*)$/);
-  const [v, setV] = useState(m ? "0" : null);
+  // starts at the real number (never stuck at 0); big numbers count up once seen
+  const [v, setV] = useState(m ? m[1] : null);
   useEffect(() => {
     if (!m) return undefined;
     const target = parseFloat(m[1]), dec = (m[1].split(".")[1] || "").length;
+    if (target < 10) return undefined;
     let raf = 0;
     const io = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return;
       io.disconnect();
+      setV("0");
       if (still()) { setV(target.toFixed(dec)); return; }
       const t0 = performance.now();
       const tick = (now) => {

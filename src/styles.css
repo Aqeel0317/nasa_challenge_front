@@ -1126,8 +1126,11 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
 .lx-title { font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif; font-size: clamp(2.6rem, 7vw, 5.6rem); font-weight: 700; line-height: 1.02; letter-spacing: -.02em; margin-bottom: 1.4rem; }
 [dir="rtl"] .lx-title { font-family: "Noto Nastaliq Urdu", serif; line-height: 1.9; letter-spacing: 0; font-size: clamp(2rem, 5vw, 3.8rem); }
 .lx-split { display: block; }
-.lx-word { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: .08em; margin-inline-end: .24em; }
-.lx-word > span { display: inline-block; transform: translateY(110%); animation: word-up .9s cubic-bezier(.2, .8, .2, 1) forwards; }
+.lx-word { display: inline-block; vertical-align: bottom; padding-bottom: .08em; margin-inline-end: .24em; }
+/* words rise in, but are visible by default: if the animation never runs, nothing is hidden */
+.lx-word > span { display: inline-block; animation: word-in .8s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes word-in { from { opacity: 0; transform: translateY(40%); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .lx-word > span { animation: none; } }
 @keyframes word-up { to { transform: none; } }
 .lx-fire > .lx-word > span { background: linear-gradient(90deg, #ffd27a, #ff7a3d 45%, #e2432a); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lx-fire { filter: drop-shadow(0 0 22px rgba(255, 110, 50, .4)); }
@@ -2035,3 +2038,14 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
 .climate-signal { margin-block: .8rem 1rem; padding: .8rem 1rem; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); }
 .climate-signal ul { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; margin: .5rem 0; padding: 0; list-style: none; }
 .fit-nums { margin-inline-start: .4rem; opacity: .8; }
+
+.qs-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-block: .4rem .8rem; font-weight: 600; }
+.qs-num { inline-size: 7rem; text-align: center; font-size: 1.1rem; padding: .5rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: inherit; }
+.qs-sub { margin: .9rem 0 .4rem; font-weight: 600; }
+
+/* determinate loading: a bar and a checklist of what is being fetched */
+.load-bar { inline-size: min(320px, 80%); block-size: 6px; border-radius: 6px; background: color-mix(in srgb, currentColor 12%, transparent); overflow: hidden; margin: .6rem auto; }
+.load-bar i { display: block; block-size: 100%; border-radius: 6px; background: linear-gradient(90deg, #5fd38a, #c6f36b); transition: inline-size .6s ease; }
+.load-steps { list-style: none; margin: .4rem auto 0; padding: 0; display: grid; gap: .3rem; text-align: start; inline-size: min(340px, 90%); font-size: .92rem; }
+.load-steps li { opacity: .45; } .load-steps li.now { opacity: 1; font-weight: 600; } .load-steps li.done { opacity: .75; }
+.sources ul { margin: .7rem 0; padding-inline-start: 1.1rem; display: grid; gap: .45rem; } .sources a { font-weight: 600; }

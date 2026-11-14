@@ -12,10 +12,10 @@ import "./guide.css";
 export const GUIDE_KEY = "aapkakhet-guided";
 
 const UI = {
-  en: { start: "Start the 1-minute guide", startSub: "With voice · tap anywhere to pause", next: "Next", back: "Back", done: "Done",
-    toSetup: "Set up my farm", skip: "Skip", of: (n, t) => `Step ${n} of ${t}`, pause: "Pause", play: "Play", mute: "Sound off", unmute: "Sound on" },
-  ur: { start: "1 منٹ کی رہنمائی شروع کریں", startSub: "آواز کے ساتھ · روکنے کے لیے کہیں بھی دبائیں", next: "آگے", back: "پیچھے", done: "مکمل",
-    toSetup: "اپنا فارم ترتیب دیں", skip: "چھوڑیں", of: (n, t) => `${t} میں سے قدم ${n}`, pause: "روکیں", play: "چلائیں", mute: "آواز بند", unmute: "آواز کھولیں" },
+  en: { start: "Start the 1-minute guide", startSub: "With voice · tap outside to close", next: "Next", back: "Back", done: "Done",
+    toSetup: "Set up my farm", skip: "Skip", skipTour: "Skip tour", of: (n, t) => `Step ${n} of ${t}`, pause: "Pause", play: "Play", mute: "Sound off", unmute: "Sound on" },
+  ur: { start: "1 منٹ کی رہنمائی شروع کریں", startSub: "آواز کے ساتھ · بند کرنے کے لیے باہر دبائیں", next: "آگے", back: "پیچھے", done: "مکمل",
+    toSetup: "اپنا فارم ترتیب دیں", skip: "چھوڑیں", skipTour: "رہنمائی چھوڑیں", of: (n, t) => `${t} میں سے قدم ${n}`, pause: "روکیں", play: "چلائیں", mute: "آواز بند", unmute: "آواز کھولیں" },
 };
 const visible = (el) => el && el.getClientRects().length > 0;
 const MUTE_KEY = "aapkakhet-guide-mute";
@@ -155,7 +155,8 @@ export default function Guide({ page = "today", onClose, thenSetup = false }) {
       <div className="guide-hole" style={hole || { top: vh / 2, left: vw / 2, width: 0, height: 0 }}>
         <span className="guide-ring" />
       </div>
-      <div className="guide-scrim" onClick={() => started && setPlaying((p) => !p)} />
+      {/* tapping outside the card closes the guide: it never traps the farmer */}
+      <div className="guide-scrim" onClick={close} />
 
       {!started ? (
         <div className="guide-hero">
@@ -185,6 +186,7 @@ export default function Guide({ page = "today", onClose, thenSetup = false }) {
             <button type="button" className="guide-icon guide-pp" onClick={() => setPlaying((p) => !p)} aria-label={playing ? ui.pause : ui.play}>
               {playing ? <Pause size={18} /> : <Play size={18} />}
             </button>
+            <button type="button" className="guide-skiptext" onClick={close}>{ui.skipTour}</button>
             <span className="guide-grow" />
             {i > 0 && <button type="button" className="btn" onClick={() => go(i - 1)}><ArrowLeft size={16} className="flip-rtl" aria-hidden="true" /> {ui.back}</button>}
             <button type="button" className="btn btn-primary guide-next" onClick={() => (last ? close() : go(i + 1))}>

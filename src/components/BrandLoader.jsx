@@ -34,7 +34,8 @@ export default function BrandLoader({ title, messages = [], size = "page", note 
   const [i, setI] = useState(0);
   useEffect(() => {
     if (messages.length < 2) return undefined;
-    const id = setInterval(() => setI((n) => (n + 1) % messages.length), 2200);
+    // steps move forward and stop at the last one (a checklist, not an endless loop)
+    const id = setInterval(() => setI((n) => Math.min(n + 1, messages.length - 1)), 2600);
     return () => clearInterval(id);
   }, [messages.length]);
 
@@ -43,9 +44,19 @@ export default function BrandLoader({ title, messages = [], size = "page", note 
       <GrowMark size={size === "page" ? 104 : 76} />
       {title && <p className="brand-loader-title">{title}</p>}
       <div className="grow-line" aria-hidden="true"><i /></div>
-      {messages.length > 0 && (
-        <p className="brand-loader-msg" key={i}>{messages[i]}</p>
+      {messages.length > 1 && (
+        <>
+          <div className="load-bar" aria-hidden="true"><i style={{ inlineSize: `${Math.round(((i + 1) / messages.length) * 100)}%` }} /></div>
+          <ol className="load-steps">
+            {messages.map((m, k) => (
+              <li key={k} className={k < i ? "done" : k === i ? "now" : ""}>
+                <span aria-hidden="true">{k < i ? "✓" : k === i ? "●" : "○"}</span> {m}
+              </li>
+            ))}
+          </ol>
+        </>
       )}
+      {messages.length === 1 && <p className="brand-loader-msg">{messages[0]}</p>}
       {note && <p className="brand-loader-note">{note}</p>}
     </div>
   );

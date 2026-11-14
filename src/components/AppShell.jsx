@@ -9,6 +9,7 @@ import PAGES from "./farm/guideSteps.json";
 
 // Pages whose narrated guide has already opened by itself once
 const SEEN_KEY = "aapkakhet-guided-pages";
+const AUTO_EACH_PAGE = false;
 const seen = () => { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || "[]"); } catch { return []; } };
 const markSeen = (p) => { try { localStorage.setItem(SEEN_KEY, JSON.stringify([...new Set([...seen(), p])])); } catch { /* ignore */ } };
 
@@ -34,7 +35,9 @@ export default function AppShell({ page, go, hasResult, form, children }) {
   // (Today's first visit is handled by the Today page: guide, then farm setup.)
   useEffect(() => {
     setGuide(null);
-    if (!hasGuide(page) || page === "today" || seen().includes(page)) return undefined;
+    // The guide opens by itself once per user (first visit, on Today); on other pages
+    // the green "How to use" button replays it, so it never pops up over the work.
+    if (AUTO_EACH_PAGE !== true || !hasGuide(page) || page === "today" || seen().includes(page)) return undefined;
     const first = PAGES[page].find((s) => s.sel)?.sel;
     const t0 = Date.now();
     const id = setInterval(() => {

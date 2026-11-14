@@ -20,6 +20,7 @@ import TodayActions from "../components/farm/TodayActions.jsx";
 import Onboarding, { ONBOARD_KEY } from "../components/farm/Onboarding.jsx";
 import Guide from "../components/farm/Guide.jsx";
 import Glossary, { Term } from "../components/farm/Glossary.jsx";
+import Sources from "../components/farm/Sources.jsx";
 import { useFarmProfile } from "../farmProfile.js";
 import FarmAdvice, { HowSteps } from "../components/farm/FarmAdvice.jsx";
 
@@ -241,6 +242,7 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
       {today && data && <TodayActions data={data} fields={fields} fc={fc} nasaDays={liveNasa?.data?.weather?.days || []} />}
       {today && <LivePanel lat={settings.lat} lon={settings.lon} place={settings.place} />}
       {today && <Glossary />}
+      {today && <Sources />}
 
       {data && <FarmAdvice data={data} fields={fields} scenario={settings.scenario} onScenario={watchScenario} now={auto} />}
 
