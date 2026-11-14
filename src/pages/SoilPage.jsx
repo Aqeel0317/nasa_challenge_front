@@ -1,4 +1,5 @@
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { planName } from "./PlansPage.jsx";
 import { ArrowDown, ArrowRight, ArrowUp } from "lucide-react";
 import { useI18n } from "../i18n.jsx";
 import { Advanced, Level, PageHeader, Panel } from "../components/ui.jsx";
@@ -34,7 +35,7 @@ export default function SoilPage({ rotations, selected, setSelected }) {
     dn: tr.n_bank_kg_ha[i + 1] - tr.n_bank_kg_ha[i],
     pest: tr.pest_pressure[i + 1] > tr.pest_pressure[i] + 0.5,
   }));
-  const compare = rotations.map((x) => ({ rank: x.rank, ...carbonVerdict(x.trajectory) }));
+  const compare = rotations.map((x) => ({ rank: x.rank, current: x.current, ...carbonVerdict(x.trajectory) }));
   const maxAbs = Math.max(...compare.map((x) => Math.abs(x.pct)), 0.5);
 
   return (
@@ -42,8 +43,8 @@ export default function SoilPage({ rotations, selected, setSelected }) {
       <PageHeader title={t("soilTitle")} lead={t("soilLeadSimple")} />
       <div className="segmented segmented-lg" role="group" aria-label={t("planLabel")}>
         {rotations.map((x, i) => (
-          <button key={x.rank} type="button" aria-pressed={i === selected} onClick={() => setSelected(i)}>
-            {t("option", { n: x.rank })}
+          <button key={x.current ? "current" : x.rank} type="button" aria-pressed={i === selected} onClick={() => setSelected(i)}>
+            {planName(x, t)}
           </button>
         ))}
       </div>
@@ -97,8 +98,8 @@ export default function SoilPage({ rotations, selected, setSelected }) {
         <p className="muted small panel-sub">{t("cmpLead")}</p>
         <div className="cmp">
           {compare.map((x, i) => (
-            <button key={x.rank} type="button" className="cmp-row" aria-pressed={i === selected} onClick={() => setSelected(i)}>
-              <span className="cmp-name">{t("option", { n: x.rank })}</span>
+            <button key={x.current ? "current" : x.rank} type="button" className="cmp-row" aria-pressed={i === selected} onClick={() => setSelected(i)}>
+              <span className="cmp-name">{planName(x, t)}</span>
               <span className="cmp-track" dir="ltr">
                 <span className="cmp-mid" />
                 <span className={`cmp-bar cmp-${x.level}`}

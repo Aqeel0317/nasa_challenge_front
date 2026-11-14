@@ -8,6 +8,7 @@ import AppShell from "./components/AppShell.jsx";
 import { Button, EmptyState } from "./components/ui.jsx";
 import BrandLoader from "./components/BrandLoader.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
+import { irrigationMm, totalAcres, useFarmProfile } from "./farmProfile.js";
 
 // After a new deploy, a page that was already open asks for code files that no
 // longer exist. Reload once to pick up the new build instead of showing a blank screen.
@@ -41,6 +42,13 @@ const StartPage = lazy(() => import("./pages/StartPage.jsx"));
 const TourPage = lazy(() => import("./pages/TourPage.jsx"));
 
 
+// Farm-simulator crop keys -> the planner's crop names
+const ENGINE_NAME = { cotton: "Cotton", rice: "Rice", maize: "Maize", sorghum: "Sorghum", pearl_millet: "Pearl millet",
+  mung_bean: "Mung bean", soybean: "Soybean", guar: "Guar", sunflower: "Sunflower", sesbania: "Sesbania (green manure)",
+  wheat: "Wheat", barley: "Barley", chickpea: "Chickpea", lentil: "Lentil", mustard: "Mustard / canola",
+  potato: "Potato", berseem: "Berseem clover", oats: "Oats (cover)" };
+const SHARED = ["lat", "lon", "place", "irrigation_mm"];
+
 const DEFAULT_FORM = {
   lat: 31.42,          // Faisalabad
   lon: 73.08,
@@ -59,7 +67,19 @@ export default function App() {
   const { t } = useI18n();
   const { page, sub, go } = useHashRoute();
   const [crops, setCrops] = useState([]);
-  const [form, setForm] = useStoredState("rotaterra-form", DEFAULT_FORM);
+  const [plannerForm, setPlannerForm] = useStoredState("rotaterra-form", DEFAULT_FORM);
+  // Location, water and farm size live in the shared farm profile (one source of truth
+  // with Today and My fields); the planner keeps only its own choices (priorities,
+  // crops, soil test, plan length).
+  const [profile, setProfile] = useFarmProfile();
+  const form = { ...plannerForm, lat: profile.lat, lon: profile.lon, place: profile.place,
+    irrigation_mm: irrigationMm(profile), acres: totalAcres(profile) };
+  const setForm = useCallback((update) => {
+    const next = typeof update === "function" ? update(form) : update;
+    const shared = Object.fromEntries(SHARED.filter((k) => next[k] !== form[k]).map((k) => [k, next[k]]));
+    if (Object.keys(shared).length) setProfile((p) => ({ ...p, ...shared }));
+    setPlannerForm(Object.fromEntries(Object.entries(next).filter(([k]) => !SHARED.includes(k) && k !== "acres")));
+  }, [form.lat, form.lon, form.place, form.irrigation_mm, plannerForm]); // eslint-disable-line react-hooks/exhaustive-deps
   const [result, setResult] = useStoredState("rotaterra-result", null, "session");
   const [selected, setSelected] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -78,15 +98,21 @@ export default function App() {
     setLoading(true);
     setError("");
     go("plans");
-    const { use_soil_test, soil_override, place, ...rest } = form; // eslint-disable-line no-unused-vars
+    const { use_soil_test, soil_override, place, acres, ...rest } = form; // eslint-disable-line no-unused-vars
+    // the farmer's own rotation (field 1) is scored too and shown first
+    const f1 = profile.fields?.[0];
+    const current = f1 ? [f1.kharif, f1.rabi].filter(Boolean).map((k) => ENGINE_NAME[k]).filter(Boolean) : [];
     try {
       const data = await getRotations({
         ...rest,
+        current_rotation: current.length ? current : null,
         allowed_crops: form.allowed_crops?.length ? form.allowed_crops : null,
         soil_override: use_soil_test ? soil_override : null,
       });
-      setResult(data);
-      setSelected(0);
+      // the current rotation goes first; remember what the plans were made for
+      const rotations = data.current ? [data.current, ...data.rotations] : data.rotations;
+      setResult({ ...data, rotations, _req: { lat: form.lat, lon: form.lon, place: form.place, irrigation_mm: form.irrigation_mm } });
+      setSelected(data.current ? 1 : 0);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -101,6 +127,9 @@ export default function App() {
   if (page === "start") return <Safe key="start"><Suspense fallback={<BrandLoader />}><StartPage onDone={openApp} /></Suspense></Safe>;
 
   const safeForm = { ...form, allowed_crops: form.allowed_crops || [] };
+  // Plans made for another place or water than the farm has now
+  const outdated = Boolean(result?._req) && (Math.abs(result._req.lat - form.lat) > 0.005
+    || Math.abs(result._req.lon - form.lon) > 0.005 || result._req.irrigation_mm !== form.irrigation_mm);
   let content;
   if (page === "today") {
     content = <FarmPage view="today" go={go} fieldForm={result ? form : null} />;
@@ -137,6 +166,12 @@ export default function App() {
   return (
     <AppShell page={page === "setup" ? "setup" : page} go={go} hasResult={!!result} form={form}>
       {error && page === "setup" && <div className="notice notice-top">{error}</div>}
+      {outdated && ["plans", "field", "crops", "soil"].includes(page) && !loading && (
+        <div className="notice notice-top notice-outdated" role="status">
+          <span>{t("plansOutdated", { then: result._req.place || "", now: form.place || "" })}</span>
+          <Button variant="primary" icon={RotateCw} onClick={findRotations}>{t("updatePlans")}</Button>
+        </div>
+      )}
       <Safe key={page}><Suspense fallback={<div className="page"><BrandLoader /></div>}>{content}</Suspense></Safe>
     </AppShell>
   );

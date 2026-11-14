@@ -1993,3 +1993,24 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
 
 .safe-fail { min-block-size: 60vh; display: grid; place-content: center; justify-items: center; gap: .8rem; padding: 2rem 16px; text-align: center; color: var(--ink, #1d2a22); }
 .safe-fail .safe-ur { font-family: "Noto Nastaliq Urdu", serif; font-size: 1.3rem; line-height: 2; }
+
+/* ---- P0: plan reports, strategies, current rotation, money reconciliation ---- */
+.plan-item-strategy { display: block; margin-block-start: .35rem; font-size: .8rem; font-weight: 600; color: var(--leaf, #2f7a4a); }
+.plan-item-current { border-style: dashed; }
+.badge-current { background: #fff3d6; color: #7a5200; }
+.badge-soft { background: color-mix(in srgb, var(--leaf, #2f7a4a) 12%, transparent); color: var(--canopy, #1d4d31); }
+.plan-report { display: grid; gap: .9rem; margin-block-start: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.report-block { border: 1px solid var(--line); border-radius: 14px; padding: .9rem 1rem; background: var(--surface); }
+.report-block h3 { display: flex; gap: .45rem; align-items: center; margin: 0 0 .55rem; font-size: 1rem; }
+.report-block ul { margin: 0; padding-inline-start: 1.1rem; display: grid; gap: .5rem; }
+.report-block li span { display: block; line-height: 1.45; }
+.report-src { display: block; margin-block-start: .15rem; color: var(--muted); font-size: .78rem; }
+.report-src a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.report-risks { border-color: color-mix(in srgb, #c2563a 40%, var(--line)); }
+.report-gaps { border-style: dashed; }
+[dir="rtl"] .report-block li span { line-height: 2; }
+.shock-why { display: block; font-size: .78rem; margin-block-start: .25rem; opacity: .9; }
+.shock-normal-sub { display: block; font-size: .78rem; opacity: .75; }
+.fact-total { display: block; }
+.notice-outdated { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; }
+.onb-acres-in { inline-size: 5.5rem; text-align: center; font-size: 1.15rem; font-weight: 700; border: 1px solid var(--line); border-radius: 10px; padding: .35rem; background: var(--surface); color: inherit; }

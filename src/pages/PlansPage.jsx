@@ -23,11 +23,42 @@ function toCsv(rotations) {
 
 // The score the plans are ranked by: today (70%) and the 2041-2050 climate (30%)
 const rankScore = (p) => 0.7 * p.total + 0.3 * (p.future_total ?? p.total);
+export const planName = (p, t) => (p.current ? t("yourRotation") : t("option", { n: p.rank }));
+
+// Why / Evidence / Benefits / Gaps / Risks, straight from the model run (en + ur)
+const BLOCKS = [["why", "🎯"], ["evidence", "🛰️"], ["benefits", "✅"], ["gaps", "❔"], ["risks", "⚠️"]];
+function PlanReport({ report, lang, t }) {
+  if (!report) return null;
+  return (
+    <div className="plan-report">
+      {BLOCKS.map(([k, icon]) => (report[k]?.length ? (
+        <section key={k} className={`report-block report-${k}`}>
+          <h3><span aria-hidden="true">{icon}</span> {t(`report_${k}`)}</h3>
+          <ul>
+            {report[k].map((item, j) => (
+              <li key={j}>
+                <span>{lang === "ur" ? item.ur : item.en}</span>
+                {item.source && (
+                  <small className="report-src">
+                    {item.url ? <a href={item.url} target="_blank" rel="noopener noreferrer">{item.source}</a> : item.source}
+                    {item.date ? ` · ${item.date}` : ""}
+                  </small>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null))}
+    </div>
+  );
+}
 
 export default function PlansPage({ result, selected, setSelected, go }) {
-  const { t, crop, explain } = useI18n();
+  const { t, crop, lang } = useI18n();
   const plans = result.rotations;
   const plan = plans[selected] || plans[0];
+  const best = plans.find((p) => !p.current);
+  const dec = new Set(plans.map((x) => Math.round(rankScore(x) * 100))).size < plans.length ? 1 : 0;
 
   return (
     <div className="page">
@@ -50,13 +81,15 @@ export default function PlansPage({ result, selected, setSelected, go }) {
         <div className="plans-layout">
           <div className="plan-list" role="listbox" aria-label={t("plansTitle")}>
             {plans.map((p, i) => (
-              <button key={p.rank} type="button" role="option" aria-selected={i === selected}
-                      className="plan-item" onClick={() => setSelected(i)}>
+              <button key={p.current ? "current" : p.rank} type="button" role="option" aria-selected={i === selected}
+                      className={`plan-item ${p.current ? "plan-item-current" : ""}`} onClick={() => setSelected(i)}>
                 <span className="plan-item-head">
-                  <span className="plan-item-name">{t("option", { n: p.rank })}</span>
-                  {i === 0 && <span className="badge">{t("bestMatch")}</span>}
-                  <bdi className="plan-item-score num">{(rankScore(p) * 100).toFixed(new Set(plans.map((x) => Math.round(rankScore(x) * 100))).size < plans.length ? 1 : 0)}</bdi>
+                  <span className="plan-item-name">{planName(p, t)}</span>
+                  {p === best && <span className="badge">{t("bestMatch")}</span>}
+                  {p.current && <span className="badge badge-current">{t("nowGrowing")}</span>}
+                  <bdi className="plan-item-score num">{(rankScore(p) * 100).toFixed(dec)}</bdi>
                 </span>
+                {p.strategy && !p.current && <span className="plan-item-strategy">{t(`strategy_${p.strategy}`)}</span>}
                 <span className="plan-item-crops">
                   {p.sequence.map((c, j) => (
                     <span key={j} className={`crop-dot crop-dot-${p.seasons[j]}`}>{crop(c)}</span>
@@ -69,8 +102,9 @@ export default function PlansPage({ result, selected, setSelected, go }) {
           <article className="plan-detail" aria-live="polite">
             <Panel className="plan-hero">
               <div className="plan-hero-head">
-                <h2>{t("option", { n: plan.rank })}</h2>
-                {selected === 0 && <span className="badge">{t("bestMatch")}</span>}
+                <h2>{planName(plan, t)}</h2>
+                {plan === best && <span className="badge">{t("bestMatch")}</span>}
+                {plan.strategy && !plan.current && <span className="badge badge-soft">{t(`strategy_${plan.strategy}`)}</span>}
               </div>
               <FieldStrip sequence={plan.sequence} seasons={plan.seasons} />
               <div className="stats-row">
@@ -83,13 +117,13 @@ export default function PlansPage({ result, selected, setSelected, go }) {
               <Panel title={t("howScores")}>
                 {Object.entries(plan.scores).map(([k, v]) => <ScoreBar key={k} label={t(k)} value={v} />)}
               </Panel>
-              <Panel title={t("whyPlan")}>
-                <ul className="reasons">
-                  {plan.explanations.map((e, k) => <li key={k}>{explain(e)}</li>)}
-                </ul>
+              <Panel title={t("planEvidenceTitle")}>
+                <p className="muted small">{t("planEvidenceLead")}</p>
                 <Button icon={LineChart} onClick={() => go("soil")}>{t("seeSoil")}</Button>
               </Panel>
             </div>
+            <PlanReport report={plan.report} lang={lang} t={t} />
+            <p className="muted small judgement-note">🤝 {t("adviceNote")}</p>
           </article>
         </div>
       )}

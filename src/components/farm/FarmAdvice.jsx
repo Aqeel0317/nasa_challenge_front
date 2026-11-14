@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Volume2, Square } from "lucide-react";
 import { useI18n } from "../../i18n.jsx";
 import { NITROGEN_FIXERS, PRICE_PER_MAUND, bareDays, formatRs } from "./farmUtils.js";
-import { fieldValue } from "./FieldBoard.jsx";
+import { farmMoney, fieldValue } from "./FieldBoard.jsx";
 
 // "Your farm at a glance": one verdict, the biggest money risk, and a few plain
 // actions worked out from this farm's own results. A Listen button reads it aloud
@@ -11,13 +11,11 @@ const SHOCKS = ["drought", "heatwave", "flood"];
 const ICON = { drought: "🏜️", heatwave: "🔥", flood: "🌊" };
 
 export function buildAdvice(data, fields, t, crop, lang) {
-  const byKey = Object.fromEntries(data.plots.map((p) => [p.crop, p]));
-  const ready = fields.filter((f) => [f.kharif, f.rabi].some((k) => k && byKey[k]));
-  const normal = ready.reduce((s, f) => s + fieldValue(f, byKey, "baseline"), 0);
-  const losses = SHOCKS.map((sc) => {
-    const v = ready.reduce((s, f) => s + fieldValue(f, byKey, sc, data.shocks), 0);
-    return { sc, loss: normal - v, pct: normal ? Math.round((100 * (normal - v)) / normal) : 0 };
-  }).sort((a, b) => b.loss - a.loss);
+  // Same totals as the disaster panel (farmMoney), so the two can never disagree.
+  const money = farmMoney(data, fields);
+  const { byKey, normal } = money;
+  const ready = money.ready.map(({ f }) => f);
+  const losses = money.shocks.map((r) => ({ sc: r.name, loss: r.loss, pct: r.pct })).sort((a, b) => b.loss - a.loss);
   const worst = losses[0];
   const level = worst.pct < 8 ? "good" : worst.pct < 20 ? "watch" : "risk";
   const rotation = (f) => [f.kharif, f.rabi].filter(Boolean).map((k) => crop(k)).join(" → ");

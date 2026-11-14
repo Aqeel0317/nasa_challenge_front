@@ -27,7 +27,10 @@ export default function Onboarding({ settings, onDone, onClose, startAt = 0 }) {
   const [step, setStep] = useState(startAt);
   const [place, setPlace] = useState({ name: settings.place, lat: settings.lat, lon: settings.lon });
   const [picked, setPicked] = useState([]);
-  const [acres, setAcres] = useState(8);
+  const [acres, setAcres] = useState(() => {
+    const now = (settings.fields || []).reduce((s, f) => s + (+f.acres || 0), 0);
+    return now > 0 ? Math.round(now * 2) / 2 : 5;
+  });
   const [water, setWater] = useState(settings.irrigation || "deficit");
   const [q, setQ] = useState("");
   const [results, setResults] = useState([]);
@@ -67,10 +70,8 @@ export default function Onboarding({ settings, onDone, onClose, startAt = 0 }) {
   // Suggest the rotations common near the chosen district first
   const district = QUICK_PLACES.find((p) => Math.abs(p.lat - place.lat) < 0.6 && Math.abs(p.lon - place.lon) < 0.6)?.name;
   const ranked = [...ROTATIONS].sort((a, b) => Number(b.near.includes(district)) - Number(a.near.includes(district)));
-  useEffect(() => {
-    // pre-select the most common rotation near the farm (the farmer can change it)
-    if (!picked.length && ranked[0]) setPicked([ranked[0].id]);
-  }, [district]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Nothing is pre-selected: the farmer taps what they actually grow (crops common
+  // near them are marked with a star and listed first).
 
   const gps = () => {
     if (!navigator.geolocation) { setMsg(t("gpsNone")); return; }
@@ -83,10 +84,14 @@ export default function Onboarding({ settings, onDone, onClose, startAt = 0 }) {
   const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < 4 ? [...p, id] : p));
   const finish = () => {
     const chosen = ROTATIONS.filter((r) => picked.includes(r.id));
-    const each = Math.max(0.5, Math.round((acres / Math.max(1, chosen.length)) * 2) / 2);
+    // split the total into half-acres; the first field takes any remainder so the
+    // fields always add up to exactly the total the farmer entered
+    const n = Math.max(1, chosen.length);
+    const each = Math.max(0.5, Math.floor((acres / n) * 2) / 2);
+    const first = Math.max(0.5, +(acres - each * (n - 1)).toFixed(1));
     onDone({
       lat: place.lat, lon: place.lon, place: place.name, irrigation: water,
-      fields: chosen.length ? chosen.map((r) => ({ kharif: r.kharif, rabi: r.rabi, acres: each })) : undefined,
+      fields: chosen.length ? chosen.map((r, k) => ({ kharif: r.kharif, rabi: r.rabi, acres: k === 0 ? first : each })) : undefined,
     });
   };
   const STEPS = 4;
@@ -149,8 +154,10 @@ export default function Onboarding({ settings, onDone, onClose, startAt = 0 }) {
             <label className="onb-acres">
               <span>{t("onb_acres")}</span>
               <span className="onb-stepper">
-                <button type="button" onClick={() => setAcres((a) => Math.max(1, a - 1))} aria-label="−">−</button>
-                <bdi className="num">{acres}</bdi>
+                <button type="button" onClick={() => setAcres((a) => Math.max(0.5, a - 1))} aria-label="−">−</button>
+                <input className="num onb-acres-in" type="number" inputMode="decimal" min="0.5" max="500" step="0.5" dir="ltr"
+                       value={acres} aria-label={t("onb_acres")}
+                       onChange={(e) => setAcres(Math.max(0.5, Math.min(500, +e.target.value || 0.5)))} />
                 <button type="button" onClick={() => setAcres((a) => Math.min(500, a + 1))} aria-label="+">+</button>
               </span>
             </label>

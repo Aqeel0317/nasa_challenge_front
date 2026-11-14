@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Plus, Star, Trash2 } from "lucide-react";
 import { useI18n } from "../../i18n.jsx";
 import {
@@ -22,56 +22,51 @@ export function fieldValue(field, byKey, which, shocks) {
   }, 0);
 }
 
-// Numbers that count up when they change: makes a loss land.
-function useCountUp(value, ms = 900) {
-  const [shown, setShown] = useState(value);
-  const from = useRef(value);
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setShown(value); return undefined; }
-    const start = performance.now(), a = from.current;
-    let raf = 0;
-    const step = (now) => {
-      const k = Math.min(1, (now - start) / ms);
-      const v = a + (value - a) * (1 - (1 - k) ** 3);
-      setShown(v);
-      if (k < 1) raf = requestAnimationFrame(step);
-      else from.current = value;
-    };
-    raf = requestAnimationFrame(step);
-    return () => { cancelAnimationFrame(raf); from.current = value; };
-  }, [value, ms]);
-  return shown;
+// The farm's money, computed once and used everywhere (Today, My fields, the advice):
+// only fields whose crops were simulated count, so every total reconciles with the
+// per-field figures (per acre x acres = field value; field values add up to the total).
+const SHOCK_NAMES = ["drought", "heatwave", "flood"];
+export function farmMoney(data, fields) {
+  const byKey = Object.fromEntries(data.plots.map((p) => [p.crop, p]));
+  const ready = fields.map((f, i) => ({ f, i })).filter(({ f }) => cropsOf(f).length && cropsOf(f).every((k) => byKey[k]));
+  const normal = ready.reduce((s, { f }) => s + fieldValue(f, byKey, "baseline"), 0);
+  const acres = ready.reduce((s, { f }) => s + (+f.acres || 0), 0);
+  const shocks = SHOCK_NAMES.map((name) => {
+    const value = ready.reduce((s, { f }) => s + fieldValue(f, byKey, name, data.shocks), 0);
+    const loss = Math.max(0, normal - value);
+    const maunds = ready.reduce((s, { f }) => s + cropsOf(f).reduce((a, k) => a
+      + Math.max(0, byKey[k].baseline.summary.yield_t_ha - (data.shocks[name]?.[k] ?? 0)) * MAUND_PER_ACRE * (+f.acres || 0), 0), 0);
+    const perField = ready.map(({ f, i }) => {
+      const b = fieldValue(f, byKey, "baseline");
+      return { i, share: b ? (b - fieldValue(f, byKey, name, data.shocks)) / b : 0 };
+    }).sort((a, b) => a.share - b.share);
+    const days = (what) => Math.max(0, ...ready.flatMap(({ f }) => cropsOf(f).map((k) => data.shock_info?.[name]?.[k]?.[what] ?? 0)));
+    return { name, value, loss, pct: normal ? Math.round((100 * loss) / normal) : 0, maunds, safest: perField[0],
+             waterlogDays: days("waterlog_days") };
+  });
+  const worst = [...shocks].sort((a, b) => b.loss - a.loss)[0];
+  return { byKey, ready, normal, acres, shocks, worst };
 }
 
+// Money is shown exactly as computed (no count-up, so no in-between figures); the
+// full rupee amount is on hover / long-press.
 function Money({ value, lang, sign = false }) {
-  const v = useCountUp(value);
-  return <bdi className="num">{sign && value < 0 ? "−" : sign && value > 0 ? "+" : ""}{formatRs(v, lang)}</bdi>;
+  const exact = `Rs ${Math.round(Math.abs(value)).toLocaleString("en-PK")}`;
+  return <bdi className="num" title={exact}>{sign && value < 0 ? "−" : sign && value > 0 ? "+" : ""}{formatRs(value, lang)}</bdi>;
 }
 
 // ---------------------------------------------------------------------------
 // "What could hit your farm": the same fields under each disaster, in rupees.
 export function ShockPanel({ data, fields, scenario, onScenario }) {
   const { t, lang } = useI18n();
-  const byKey = Object.fromEntries(data.plots.map((p) => [p.crop, p]));
-  const normal = fields.reduce((s, f) => s + fieldValue(f, byKey, "baseline"), 0);
-  const rows = ["drought", "heatwave", "flood"].map((name) => {
-    const value = fields.reduce((s, f) => s + fieldValue(f, byKey, name, data.shocks), 0);
-    const maunds = fields.reduce((s, f) => s + cropsOf(f).reduce((a, k) => a + (byKey[k]
-      ? (byKey[k].baseline.summary.yield_t_ha - (data.shocks[name]?.[k] ?? 0)) * MAUND_PER_ACRE * (f.acres || 0) : 0), 0), 0);
-    // Which field holds up best: smallest share of its normal value lost
-    const perField = fields.map((f, i) => {
-      const b = fieldValue(f, byKey, "baseline");
-      return { i, share: b ? (b - fieldValue(f, byKey, name, data.shocks)) / b : 0 };
-    }).sort((a, b) => a.share - b.share);
-    return { name, loss: normal - value, pct: normal ? Math.round((100 * (normal - value)) / normal) : 0, maunds, safest: perField[0] };
-  });
-  const worst = [...rows].sort((a, b) => b.loss - a.loss)[0];
+  const { normal, acres, ready, shocks: rows, worst } = farmMoney(data, fields);
 
   return (
     <section className="shock" aria-labelledby="shock-title">
       <div className="shock-head">
         <h2 id="shock-title">{t("shockTitle")}</h2>
-        <p className="shock-normal">{t("normalIncome")} <Money value={normal} lang={lang} /></p>
+        <p className="shock-normal">{t("normalIncome")} <Money value={normal} lang={lang} />
+          <small className="shock-normal-sub">{t("normalIncomeSub", { n: ready.length, acres: +acres.toFixed(1) })}</small></p>
       </div>
       {worst.loss > 0 && (
         <p className="shock-headline" role="status">
@@ -90,10 +85,13 @@ export function ShockPanel({ data, fields, scenario, onScenario }) {
             </span>
             <span className="shock-meter" aria-hidden="true"><i style={{ inlineSize: `${Math.min(100, Math.max(0, r.pct))}%` }} /></span>
             <span className="shock-sub">
-              {r.loss >= 0 ? t("shockPctLoss", { pct: r.pct }) : t("shockPctGain", { pct: -r.pct })}
+              {t("shockPctLoss", { pct: r.pct })}
               {" · "}{t("maundsLost", { n: Math.round(Math.abs(r.maunds)).toLocaleString("en-US") })}
             </span>
-            {fields.length > 1 && (
+            {r.name === "flood" && r.waterlogDays > 0 && (
+              <span className="shock-why">💧 {t("shockWaterlog", { days: r.waterlogDays })}</span>
+            )}
+            {ready.length > 1 && r.safest && (
               <span className="shock-safe">🛡️ {t("safestField", { n: r.safest.i + 1 })}</span>
             )}
             <span className="shock-watch">{scenario === r.name ? t("watchingNow") : t("tapToWatch")} ▶</span>
@@ -190,6 +188,7 @@ export function FieldBoard({ fields, setFields, data, selected, onSelect, unit }
                   <div className="fact-money">
                     <span className="muted small">{t("valuePerAcre")}</span>
                     <Money value={perAcre} lang={lang} />
+                    <span className="muted small fact-total">× {+f.acres || 0} {t("acres")} = <Money value={perAcre * (+f.acres || 0)} lang={lang} /></span>
                     {vsCurrent != null && Math.abs(vsCurrent) >= 500 && (
                       <span className={`delta ${vsCurrent < 0 ? "delta-down" : "delta-up"}`}>
                         {vsCurrent > 0 ? "+" : "−"}{formatRs(vsCurrent, lang)} {t("vsCurrent")}

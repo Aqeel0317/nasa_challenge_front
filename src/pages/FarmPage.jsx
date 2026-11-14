@@ -19,6 +19,7 @@ import LocationPicker from "../components/farm/LocationPicker.jsx";
 import TodayActions from "../components/farm/TodayActions.jsx";
 import Onboarding, { ONBOARD_KEY } from "../components/farm/Onboarding.jsx";
 import Guide from "../components/farm/Guide.jsx";
+import { useFarmProfile } from "../farmProfile.js";
 import FarmAdvice, { HowSteps } from "../components/farm/FarmAdvice.jsx";
 
 const Farm3D = lazy(() => import("../components/farm/Farm3D.jsx"));
@@ -65,7 +66,8 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
   }, [guide, guideReady]);
   const closeOnb = () => { try { localStorage.setItem(ONBOARD_KEY, "1"); } catch { /* blocked */ } setOnb(null); };
   const { t, lang, crop } = useI18n();
-  const [stored, setSettings] = useStoredState("aapkakhet-farm-v2", DEFAULTS);
+  // The one farm profile shared with every page (location, water, fields)
+  const [stored, setSettings] = useFarmProfile();
   const settings = { ...DEFAULTS, ...stored, fields: stored.fields?.length ? stored.fields : DEFAULTS.fields,
     year: stored.yearChosen ? stored.year : CURRENT_YEAR };
   const [data, setData] = useState(null);
