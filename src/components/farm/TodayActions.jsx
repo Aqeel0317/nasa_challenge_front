@@ -1,4 +1,4 @@
-import { Square, Volume2 } from "lucide-react";
+import { Send, Square, Volume2 } from "lucide-react";
 import { useI18n } from "../../i18n.jsx";
 import { CROP_ICON, activeCrop } from "./farmUtils.js";
 import { useSpeech } from "./FarmAdvice.jsx";
@@ -57,6 +57,15 @@ export default function TodayActions({ data, fields, fc, nasaDays = [] }) {
   const date = new Date(`${tl.today}T00:00:00`).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" });
   const spoken = [t("today_title"), date, ...actions.map((a) => [a.pill, a.head, a.why].filter(Boolean).join(". "))].join(". ");
 
+  // Send today's list to family or farm workers (WhatsApp is how most farmers share)
+  const share = async () => {
+    const text = [`📅 ${t("today_title")} · ${date}`,
+      ...actions.map((a) => `${a.icon} ${[a.pill, a.head].filter(Boolean).join(": ")}\n   ${a.why}`),
+      `🌾 ${lang === "ur" ? "آپ کا کھیت" : "Aap ka Khet"}: ${window.location.origin}`].join("\n");
+    if (navigator.share) { try { await navigator.share({ text }); return; } catch (e) { if (e?.name === "AbortError") return; } }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+  };
+
   return (
     <section className="today-card" aria-labelledby="today-title">
       <header className="today-head">
@@ -64,12 +73,17 @@ export default function TodayActions({ data, fields, fc, nasaDays = [] }) {
           <p className="today-kicker">📅 {date}</p>
           <h2 id="today-title">{t("today_title")}</h2>
         </div>
-        {supported && (
-          <button type="button" className={`listen ${speaking ? "is-on" : ""}`} onClick={() => speak(spoken)}>
-            {speaking ? <Square size={18} aria-hidden="true" /> : <Volume2 size={20} aria-hidden="true" />}
-            <span>{speaking ? t("stopListen") : t("listen")}</span>
+        <div className="today-btns">
+          <button type="button" className="today-share" onClick={share}>
+            <Send size={18} className="flip-rtl" aria-hidden="true" /><span>{t("today_share")}</span>
           </button>
-        )}
+          {supported && (
+            <button type="button" className={`listen ${speaking ? "is-on" : ""}`} onClick={() => speak(spoken)}>
+              {speaking ? <Square size={18} aria-hidden="true" /> : <Volume2 size={20} aria-hidden="true" />}
+              <span>{speaking ? t("stopListen") : t("listen")}</span>
+            </button>
+          )}
+        </div>
       </header>
       {noVoice && <p className="advice-note">{t("noUrduVoice")}</p>}
       <ul className="today-list">
