@@ -84,3 +84,8 @@ html.guide-open { scroll-behavior: auto; }
 @keyframes guide-fab-in { from { opacity: 0; transform: translateY(16px) scale(.9); } to { opacity: 1; transform: none; } }
 @media (max-width: 760px) { .guide-fab { bottom: calc(84px + env(safe-area-inset-bottom)); inset-inline-end: 14px; padding: .6rem .95rem .6rem .7rem; font-size: .9rem; } }
 @media print { .guide-fab { display: none; } }
+
+/* Voice in the farm-setup window */
+.onb-head { gap: .4rem; }
+.onb-wave { margin-inline-start: auto; }
+.onb-wave i { background: var(--leaf, #2f9a5c); }

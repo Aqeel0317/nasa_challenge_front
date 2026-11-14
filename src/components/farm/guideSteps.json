@@ -119,14 +119,14 @@
   {
    "id": "edit",
    "sel": ".today-actions-head",
-   "icon": "✏️",
+   "icon": "🌱",
    "en": [
-    "Change your farm any time",
-    "Tap “Set up my farm” to change your crops, acres or water. You can open this guide again from “How to use”."
+    "Now, set up your own farm",
+    "Next, tell us where your farm is, what you grow, and how much water you have. It takes about thirty seconds. You can change it any time with Set up my farm."
    ],
    "ur": [
-    "فارم کبھی بھی بدلیں",
-    "فصلیں، ایکڑ یا پانی بدلنے کے لیے “اپنا فارم ترتیب دیں” دبائیں۔ یہ رہنمائی “استعمال کا طریقہ” سے دوبارہ کھولیں۔"
+    "اب اپنا فارم ترتیب دیں",
+    "اب ہمیں بتائیں کہ آپ کا فارم کہاں ہے، آپ کیا اگاتے ہیں، اور آپ کے پاس کتنا پانی ہے۔ اس میں تقریباً تیس سیکنڈ لگیں گے۔ آپ اسے کبھی بھی اپنا فارم ترتیب دیں سے بدل سکتے ہیں۔"
    ]
   }
  ],
@@ -438,6 +438,52 @@
    "ur": [
     "منصوبوں کا موازنہ",
     "آپ کے سب منصوبے ساتھ ساتھ، تاکہ آپ وہ چنیں جو آپ کی زمین کو سب سے صحت مند رکھے۔"
+   ]
+  }
+ ],
+ "onboarding": [
+  {
+   "id": "place",
+   "en": [
+    "Where is your farm?",
+    "Tap Use my location, search for your village, or tap your district below. Then press Next."
+   ],
+   "ur": [
+    "آپ کا فارم کہاں ہے؟",
+    "میری لوکیشن دبائیں، اپنا گاؤں تلاش کریں، یا نیچے اپنا ضلع دبائیں۔ پھر آگے دبائیں۔"
+   ]
+  },
+  {
+   "id": "crops",
+   "en": [
+    "What do you grow?",
+    "Tap the crops you grow: a summer crop, then a winter crop. The ones marked with a star are common near you. Each one becomes a field. Then set your total acres."
+   ],
+   "ur": [
+    "آپ کیا اگاتے ہیں؟",
+    "اپنی فصلیں دبائیں: پہلے گرمیوں کی فصل، پھر سردیوں کی فصل۔ ستارے والی فصلیں آپ کے علاقے میں عام ہیں۔ ہر ایک ایک کھیت بنے گی۔ پھر اپنے کل ایکڑ لکھیں۔"
+   ]
+  },
+  {
+   "id": "water",
+   "en": [
+    "How much water can you give?",
+    "Rain only, some water from a canal turn or tube-well, or plenty of water. This changes the advice for your crops."
+   ],
+   "ur": [
+    "آپ کتنا پانی دے سکتے ہیں؟",
+    "صرف بارش، نہری باری یا ٹیوب ویل سے کچھ پانی، یا کافی پانی۔ اسی سے آپ کی فصلوں کا مشورہ بدلتا ہے۔"
+   ]
+  },
+  {
+   "id": "sources",
+   "en": [
+    "Where the advice comes from",
+    "NASA satellites measure the heat, rain, soil moisture and greenness at your farm. We grow your crops in a computer model with this data and turn it into simple advice. Press See my farm to start."
+   ],
+   "ur": [
+    "مشورہ کہاں سے آتا ہے",
+    "ناسا کے سیٹلائٹ آپ کے فارم کی گرمی، بارش، مٹی کی نمی اور سبزہ ناپتے ہیں۔ ہم اس ڈیٹا سے کمپیوٹر ماڈل میں آپ کی فصلیں اگاتے ہیں اور اسے آسان مشورے میں بدلتے ہیں۔ شروع کرنے کے لیے میرا فارم دیکھیں دبائیں۔"
    ]
   }
  ]

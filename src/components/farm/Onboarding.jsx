@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, LocateFixed, Search, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, LocateFixed, RotateCcw, Search, Volume2, VolumeX, X } from "lucide-react";
 import { useI18n } from "../../i18n.jsx";
 import { CROP_ICON } from "./farmUtils.js";
 import { QUICK_PLACES, placeName, searchPlaces } from "../../weather.js";
@@ -32,6 +32,30 @@ export default function Onboarding({ settings, onDone, onClose, startAt = 0 }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState([]);
   const [msg, setMsg] = useState("");
+  // Voice: each step explains itself (same voices as the guide; files in public/guide/)
+  const VOICE = ["place", "crops", "water", "sources"];
+  const audio = useRef(null);
+  const [talking, setTalking] = useState(false);
+  const [mute, setMute] = useState(() => { try { return localStorage.getItem("aapkakhet-guide-mute") === "1"; } catch { return false; } });
+  const say = () => {
+    const a = audio.current || new Audio();
+    audio.current = a;
+    a.pause();
+    a.src = `/guide/${lang === "ur" ? "ur" : "en"}-onboarding-${VOICE[step]}.mp3`;
+    a.muted = mute;
+    a.onplaying = () => setTalking(true);
+    a.onpause = a.onended = () => setTalking(false);
+    a.play().catch(() => setTalking(false));
+  };
+  useEffect(() => {
+    const id = setTimeout(say, 350);
+    return () => { clearTimeout(id); audio.current?.pause(); };
+  }, [step, lang]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (audio.current) audio.current.muted = mute;
+    try { localStorage.setItem("aapkakhet-guide-mute", mute ? "1" : "0"); } catch { /* ignore */ }
+  }, [mute]);
+  useEffect(() => () => audio.current?.pause(), []);
 
   useEffect(() => {
     if (q.trim().length < 2) { setResults([]); return undefined; }
@@ -75,6 +99,11 @@ export default function Onboarding({ settings, onDone, onClose, startAt = 0 }) {
           <ol className="onb-dots" aria-label={t("onb_progress", { n: step + 1, total: STEPS })}>
             {Array.from({ length: STEPS }, (_, k) => <li key={k} className={k <= step ? "on" : ""} />)}
           </ol>
+          <span className={`guide-wave onb-wave ${talking && !mute ? "on" : ""}`} aria-hidden="true"><i /><i /><i /><i /><i /></span>
+          <button type="button" className="onb-x" onClick={say} aria-label={t("listen")}><RotateCcw size={18} /></button>
+          <button type="button" className="onb-x" onClick={() => setMute((m) => !m)} aria-label={mute ? t("tour_unmute") : t("tour_mute")}>
+            {mute ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </button>
           <button type="button" className="onb-x" onClick={onClose} aria-label={t("onb_skip")}><X size={20} /></button>
         </header>
 
