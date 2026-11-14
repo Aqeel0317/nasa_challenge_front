@@ -1,131 +1,444 @@
-[
- {
-  "id": "intro",
-  "icon": "👋",
-  "en": [
-   "Welcome!",
-   "In one minute I'll show you how to use this app. Then we'll set up your own farm."
-  ],
-  "ur": [
-   "خوش آمدید!",
-   "ایک منٹ میں آپ کو دکھاتے ہیں کہ یہ ایپ کیسے استعمال کریں۔ پھر ہم آپ کا اپنا فارم ترتیب دیں گے۔"
-  ]
- },
- {
-  "id": "place",
-  "sel": ".locpick-bar",
-  "icon": "📍",
-  "en": [
-   "Your farm's place",
-   "The weather and NASA data are for this place. Tap “Change place” to choose your village or district, or use GPS."
-  ],
-  "ur": [
-   "آپ کے فارم کی جگہ",
-   "موسم اور ناسا کا ڈیٹا اسی جگہ کا ہے۔ اپنا گاؤں یا ضلع چننے کے لیے “جگہ بدلیں” دبائیں، یا GPS استعمال کریں۔"
-  ]
- },
- {
-  "id": "today",
-  "sel": ".today-card",
-  "icon": "✅",
-  "en": [
-   "Start here every day",
-   "Each field tells you what to do today. Green means all fine. Red means give water today."
-  ],
-  "ur": [
-   "ہر روز یہاں سے شروع کریں",
-   "ہر کھیت بتاتا ہے کہ آج کیا کرنا ہے۔ سبز کا مطلب سب ٹھیک ہے۔ سرخ کا مطلب آج پانی دیں۔"
-  ]
- },
- {
-  "id": "listen",
-  "sel": ".today-card .listen",
-  "icon": "🔊",
-  "en": [
-   "Listen instead of reading",
-   "Tap “Listen” and the phone reads today's work aloud."
-  ],
-  "ur": [
-   "پڑھنے کے بجائے سنیں",
-   "“سنیں” دبائیں، فون آج کا کام بول کر سنائے گا۔"
-  ]
- },
- {
-  "id": "share",
-  "sel": ".today-share",
-  "icon": "📲",
-  "en": [
-   "Send it to your family",
-   "Send today's list on WhatsApp to your family or the people who work on your farm."
-  ],
-  "ur": [
-   "گھر والوں کو بھیجیں",
-   "آج کی فہرست واٹس ایپ پر اپنے گھر والوں یا کھیت پر کام کرنے والوں کو بھیجیں۔"
-  ]
- },
- {
-  "id": "weather",
-  "sel": ".live",
-  "icon": "⛅",
-  "en": [
-   "Weather at your farm",
-   "Today and the next 7 days, and below it what NASA satellites saw at your farm in the last 14 days."
-  ],
-  "ur": [
-   "آپ کے فارم کا موسم",
-   "آج اور اگلے 7 دن کا موسم، اور نیچے پچھلے 14 دن میں ناسا سیٹلائٹ نے آپ کے فارم پر کیا دیکھا۔"
-  ]
- },
- {
-  "id": "disaster",
-  "sel": ".advice-meter",
-  "icon": "🔥",
-  "en": [
-   "What if a disaster comes?",
-   "Tap drought, heatwave or heavy rain to see what it would do to your crops, and the loss in rupees."
-  ],
-  "ur": [
-   "اگر آفت آ جائے تو؟",
-   "خشک سالی، گرمی کی لہر یا تیز بارش دبائیں اور دیکھیں کہ فصل کا کیا ہوگا، اور نقصان روپوں میں۔"
-  ]
- },
- {
-  "id": "tips",
-  "sel": ".advice-tips",
-  "icon": "🛡️",
-  "en": [
-   "How to protect your harvest",
-   "Simple steps that lower your loss, worked out for your own fields."
-  ],
-  "ur": [
-   "اپنی فصل کیسے بچائیں",
-   "آسان قدم جو آپ کا نقصان کم کرتے ہیں، آپ کے اپنے کھیتوں کے حساب سے۔"
-  ]
- },
- {
-  "id": "pages",
-  "sel": ".nav",
-  "icon": "🧭",
-  "en": [
-   "More pages",
-   "“My fields” shows your farm in 3D through the season. “Next season” helps you choose what to grow."
-  ],
-  "ur": [
-   "مزید صفحے",
-   "“میرے کھیت” میں پورا موسم آپ کا فارم 3D میں دکھتا ہے۔ “اگلا سیزن” بتاتا ہے کہ کیا اگائیں۔"
-  ]
- },
- {
-  "id": "edit",
-  "sel": ".today-actions-head",
-  "icon": "✏️",
-  "en": [
-   "Change your farm any time",
-   "Tap “Set up my farm” to change your crops, acres or water. You can open this guide again from “How to use”."
-  ],
-  "ur": [
-   "فارم کبھی بھی بدلیں",
-   "فصلیں، ایکڑ یا پانی بدلنے کے لیے “اپنا فارم ترتیب دیں” دبائیں۔ یہ رہنمائی “استعمال کا طریقہ” سے دوبارہ کھولیں۔"
-  ]
- }
-]
+{
+ "today": [
+  {
+   "id": "intro",
+   "icon": "👋",
+   "en": [
+    "Welcome!",
+    "In one minute I'll show you how to use this app. Then we'll set up your own farm."
+   ],
+   "ur": [
+    "خوش آمدید!",
+    "ایک منٹ میں آپ کو دکھاتے ہیں کہ یہ ایپ کیسے استعمال کریں۔ پھر ہم آپ کا اپنا فارم ترتیب دیں گے۔"
+   ]
+  },
+  {
+   "id": "place",
+   "sel": ".locpick-bar",
+   "icon": "📍",
+   "en": [
+    "Your farm's place",
+    "The weather and NASA data are for this place. Tap “Change place” to choose your village or district, or use GPS."
+   ],
+   "ur": [
+    "آپ کے فارم کی جگہ",
+    "موسم اور ناسا کا ڈیٹا اسی جگہ کا ہے۔ اپنا گاؤں یا ضلع چننے کے لیے “جگہ بدلیں” دبائیں، یا GPS استعمال کریں۔"
+   ]
+  },
+  {
+   "id": "today",
+   "sel": ".today-card",
+   "icon": "✅",
+   "en": [
+    "Start here every day",
+    "Each field tells you what to do today. Green means all fine. Red means give water today."
+   ],
+   "ur": [
+    "ہر روز یہاں سے شروع کریں",
+    "ہر کھیت بتاتا ہے کہ آج کیا کرنا ہے۔ سبز کا مطلب سب ٹھیک ہے۔ سرخ کا مطلب آج پانی دیں۔"
+   ]
+  },
+  {
+   "id": "listen",
+   "sel": ".today-card .listen",
+   "icon": "🔊",
+   "en": [
+    "Listen instead of reading",
+    "Tap “Listen” and the phone reads today's work aloud."
+   ],
+   "ur": [
+    "پڑھنے کے بجائے سنیں",
+    "“سنیں” دبائیں، فون آج کا کام بول کر سنائے گا۔"
+   ]
+  },
+  {
+   "id": "share",
+   "sel": ".today-share",
+   "icon": "📲",
+   "en": [
+    "Send it to your family",
+    "Send today's list on WhatsApp to your family or the people who work on your farm."
+   ],
+   "ur": [
+    "گھر والوں کو بھیجیں",
+    "آج کی فہرست واٹس ایپ پر اپنے گھر والوں یا کھیت پر کام کرنے والوں کو بھیجیں۔"
+   ]
+  },
+  {
+   "id": "weather",
+   "sel": ".live",
+   "icon": "⛅",
+   "en": [
+    "Weather at your farm",
+    "Today and the next 7 days, and below it what NASA satellites saw at your farm in the last 14 days."
+   ],
+   "ur": [
+    "آپ کے فارم کا موسم",
+    "آج اور اگلے 7 دن کا موسم، اور نیچے پچھلے 14 دن میں ناسا سیٹلائٹ نے آپ کے فارم پر کیا دیکھا۔"
+   ]
+  },
+  {
+   "id": "disaster",
+   "sel": ".advice-meter",
+   "icon": "🔥",
+   "en": [
+    "What if a disaster comes?",
+    "Tap drought, heatwave or heavy rain to see what it would do to your crops, and the loss in rupees."
+   ],
+   "ur": [
+    "اگر آفت آ جائے تو؟",
+    "خشک سالی، گرمی کی لہر یا تیز بارش دبائیں اور دیکھیں کہ فصل کا کیا ہوگا، اور نقصان روپوں میں۔"
+   ]
+  },
+  {
+   "id": "tips",
+   "sel": ".advice-tips",
+   "icon": "🛡️",
+   "en": [
+    "How to protect your harvest",
+    "Simple steps that lower your loss, worked out for your own fields."
+   ],
+   "ur": [
+    "اپنی فصل کیسے بچائیں",
+    "آسان قدم جو آپ کا نقصان کم کرتے ہیں، آپ کے اپنے کھیتوں کے حساب سے۔"
+   ]
+  },
+  {
+   "id": "pages",
+   "sel": ".nav",
+   "icon": "🧭",
+   "en": [
+    "More pages",
+    "“My fields” shows your farm in 3D through the season. “Next season” helps you choose what to grow."
+   ],
+   "ur": [
+    "مزید صفحے",
+    "“میرے کھیت” میں پورا موسم آپ کا فارم 3D میں دکھتا ہے۔ “اگلا سیزن” بتاتا ہے کہ کیا اگائیں۔"
+   ]
+  },
+  {
+   "id": "edit",
+   "sel": ".today-actions-head",
+   "icon": "✏️",
+   "en": [
+    "Change your farm any time",
+    "Tap “Set up my farm” to change your crops, acres or water. You can open this guide again from “How to use”."
+   ],
+   "ur": [
+    "فارم کبھی بھی بدلیں",
+    "فصلیں، ایکڑ یا پانی بدلنے کے لیے “اپنا فارم ترتیب دیں” دبائیں۔ یہ رہنمائی “استعمال کا طریقہ” سے دوبارہ کھولیں۔"
+   ]
+  }
+ ],
+ "farm": [
+  {
+   "id": "how",
+   "sel": ".how3",
+   "icon": "🧭",
+   "en": [
+    "Your farm simulator",
+    "Three simple steps: tell us your crops, pick the weather to test, then see your loss and what to do."
+   ],
+   "ur": [
+    "آپ کا فارم سمیولیٹر",
+    "تین آسان قدم: اپنی فصلیں بتائیں، آزمانے کے لیے موسم چنیں، پھر اپنا نقصان اور اس کا حل دیکھیں۔"
+   ]
+  },
+  {
+   "id": "fields",
+   "sel": ".fields",
+   "icon": "🌾",
+   "en": [
+    "Your fields",
+    "Up to four fields. For each one, pick the summer crop, the winter crop and the acres. Field 1 is what you grow now; use the others to try different crops."
+   ],
+   "ur": [
+    "آپ کے کھیت",
+    "زیادہ سے زیادہ چار کھیت۔ ہر کھیت کے لیے گرمیوں کی فصل، سردیوں کی فصل اور ایکڑ چنیں۔ کھیت 1 وہ ہے جو آپ ابھی اگاتے ہیں، باقی سے دوسری فصلیں آزمائیں۔"
+   ]
+  },
+  {
+   "id": "weather",
+   "sel": ".scenario-tiles",
+   "icon": "🌦️",
+   "en": [
+    "Choose the weather to test",
+    "Auto uses this week's real weather. Or tap drought, heatwave or heavy rain to see what a disaster would do."
+   ],
+   "ur": [
+    "آزمانے کے لیے موسم چنیں",
+    "آٹو اس ہفتے کا اصل موسم لیتا ہے۔ یا خشک سالی، گرمی کی لہر یا تیز بارش دبائیں اور دیکھیں کہ آفت کیا کرے گی۔"
+   ]
+  },
+  {
+   "id": "cost",
+   "sel": ".shock",
+   "icon": "💸",
+   "en": [
+    "What it would cost you",
+    "The loss in rupees for each disaster, and which field holds up best. Tap Watch it happen to see it on your farm."
+   ],
+   "ur": [
+    "آپ کا کتنا نقصان ہوگا",
+    "ہر آفت کا نقصان روپوں میں، اور کون سا کھیت سب سے بہتر بچتا ہے۔ اسے اپنے فارم پر دیکھنے کے لیے ہوتا دیکھیں دبائیں۔"
+   ]
+  },
+  {
+   "id": "3d",
+   "sel": ".farm-viewport",
+   "icon": "🚜",
+   "en": [
+    "Your farm in 3D",
+    "Press Play season to watch your crops grow day by day. Tap a field to see its water, heat and harvest."
+   ],
+   "ur": [
+    "آپ کا فارم 3D میں",
+    "سیزن چلائیں دبائیں اور اپنی فصلیں دن بہ دن بڑھتی دیکھیں۔ کسی کھیت کو دبائیں تو اس کا پانی، گرمی اور پیداوار نظر آئے گی۔"
+   ]
+  },
+  {
+   "id": "calendar",
+   "sel": ".calendar",
+   "icon": "📅",
+   "en": [
+    "Crop health through the season",
+    "Each bar is one crop from sowing to harvest. Green is healthy, yellow and red mean stress. Tap a bar to jump to that day."
+   ],
+   "ur": [
+    "پورے سیزن میں فصل کی صحت",
+    "ہر پٹی ایک فصل ہے، بوائی سے کٹائی تک۔ سبز صحت مند ہے، پیلا اور سرخ دباؤ ہے۔ کسی دن پر جانے کے لیے پٹی دبائیں۔"
+   ]
+  }
+ ],
+ "setup": [
+  {
+   "id": "place",
+   "sel": ".qs-place",
+   "icon": "📍",
+   "en": [
+    "Where is your field?",
+    "Use GPS, search your village, or tap your district."
+   ],
+   "ur": [
+    "آپ کا کھیت کہاں ہے؟",
+    "جی پی ایس استعمال کریں، اپنا گاؤں تلاش کریں، یا اپنا ضلع دبائیں۔"
+   ]
+  },
+  {
+   "id": "water",
+   "sel": ".choice-grid-3",
+   "icon": "💧",
+   "en": [
+    "How much water?",
+    "Rain only, some water, or plenty of water. This changes which crops make sense."
+   ],
+   "ur": [
+    "کتنا پانی؟",
+    "صرف بارش، کچھ پانی، یا کافی پانی۔ اسی سے طے ہوتا ہے کہ کون سی فصلیں بہتر ہیں۔"
+   ]
+  },
+  {
+   "id": "goal",
+   "sel": ".choice-grid:not(.choice-grid-3)",
+   "icon": "⚖️",
+   "en": [
+    "What matters most?",
+    "Balanced, healthy soil, saving water, or the most income. We rank the plans for you."
+   ],
+   "ur": [
+    "آپ کے لیے سب سے اہم کیا ہے؟",
+    "متوازن، صحت مند مٹی، پانی کی بچت، یا زیادہ آمدنی۔ ہم اسی حساب سے منصوبے ترتیب دیتے ہیں۔"
+   ]
+  },
+  {
+   "id": "go",
+   "sel": ".qs-go",
+   "icon": "🔍",
+   "en": [
+    "See your best plans",
+    "Tap here. We read NASA weather and soil data for your field and show the best crop plans for the next three years."
+   ],
+   "ur": [
+    "اپنے بہترین منصوبے دیکھیں",
+    "یہاں دبائیں۔ ہم آپ کے کھیت کا ناسا موسم اور مٹی کا ڈیٹا پڑھ کر اگلے تین سال کے بہترین فصلی منصوبے دکھاتے ہیں۔"
+   ]
+  }
+ ],
+ "plans": [
+  {
+   "id": "list",
+   "sel": ".plan-list",
+   "icon": "🏆",
+   "en": [
+    "Your best plans, ranked",
+    "Each option is an order of crops for three years. The best match is at the top. Tap one to see it."
+   ],
+   "ur": [
+    "آپ کے بہترین منصوبے",
+    "ہر آپشن تین سال کی فصلوں کی ترتیب ہے۔ سب سے بہتر اوپر ہے۔ دیکھنے کے لیے کسی ایک کو دبائیں۔"
+   ]
+  },
+  {
+   "id": "hero",
+   "sel": ".plan-hero",
+   "icon": "🗓️",
+   "en": [
+    "The plan, season by season",
+    "The summer and winter crop for each year, how well it handles a hotter future, and the water it needs."
+   ],
+   "ur": [
+    "منصوبہ، سیزن بہ سیزن",
+    "ہر سال کی گرمیوں اور سردیوں کی فصل، گرم مستقبل میں یہ کتنا ٹھیک رہے گا، اور اسے کتنا پانی چاہیے۔"
+   ]
+  },
+  {
+   "id": "why",
+   "sel": ".plan-detail .detail-grid",
+   "icon": "💡",
+   "en": [
+    "Why this plan",
+    "How it scores on soil, water, climate and profit, and the reasons in plain words."
+   ],
+   "ur": [
+    "یہ منصوبہ کیوں",
+    "مٹی، پانی، موسم اور منافع پر اس کے نمبر، اور وجوہات آسان الفاظ میں۔"
+   ]
+  }
+ ],
+ "field": [
+  {
+   "id": "facts",
+   "sel": ".fact-row",
+   "icon": "🌡️",
+   "en": [
+    "Your weather in short",
+    "The hottest, coldest and wettest month at your field, and how much rain falls in a year."
+   ],
+   "ur": [
+    "آپ کا موسم مختصر",
+    "آپ کے کھیت کا سب سے گرم، سب سے ٹھنڈا اور سب سے زیادہ بارش والا مہینہ، اور سال میں کتنی بارش ہوتی ہے۔"
+   ]
+  },
+  {
+   "id": "months",
+   "sel": ".months",
+   "icon": "📆",
+   "en": [
+    "Your year, month by month",
+    "Each tile is a month: its usual temperature, and a blue bar for the rain."
+   ],
+   "ur": [
+    "آپ کا سال، مہینہ بہ مہینہ",
+    "ہر خانہ ایک مہینہ ہے: اس کا عام درجہ حرارت، اور بارش کے لیے نیلی پٹی۔"
+   ]
+  },
+  {
+   "id": "risks",
+   "sel": ".risk-grid",
+   "icon": "⚠️",
+   "en": [
+    "Weather risks",
+    "Very hot days, long dry spells, and how the climate is expected to change by 2050."
+   ],
+   "ur": [
+    "موسمی خطرے",
+    "بہت گرم دن، لمبے خشک دن، اور 2050 تک موسم کتنا بدلنے کی توقع ہے۔"
+   ]
+  },
+  {
+   "id": "soil",
+   "sel": ".texture-bar",
+   "icon": "🟫",
+   "en": [
+    "Your soil and the satellite",
+    "What your soil is made of, and what NASA's satellite saw growing on this spot."
+   ],
+   "ur": [
+    "آپ کی مٹی اور سیٹلائٹ",
+    "آپ کی مٹی کس چیز سے بنی ہے، اور ناسا کے سیٹلائٹ نے اس جگہ کیا اگتا دیکھا۔"
+   ]
+  }
+ ],
+ "crops": [
+  {
+   "id": "best",
+   "sel": ".headline",
+   "icon": "🏅",
+   "en": [
+    "Best crops for your field",
+    "The crops that suit your field best right now, for summer and for winter."
+   ],
+   "ur": [
+    "آپ کے کھیت کی بہترین فصلیں",
+    "وہ فصلیں جو ابھی آپ کے کھیت کے لیے سب سے موزوں ہیں، گرمیوں اور سردیوں کے لیے۔"
+   ]
+  },
+  {
+   "id": "list",
+   "sel": ".fit-list",
+   "icon": "📊",
+   "en": [
+    "How well each crop fits",
+    "Green grows well, yellow is OK, red is a poor fit. The black line shows the fit in 2050 as the climate warms."
+   ],
+   "ur": [
+    "ہر فصل کتنی موزوں ہے",
+    "سبز اچھی اگتی ہے، پیلی ٹھیک ہے، سرخ موزوں نہیں۔ کالی لکیر بتاتی ہے کہ 2050 میں گرمی بڑھنے پر کیا حال ہوگا۔"
+   ]
+  }
+ ],
+ "soil": [
+  {
+   "id": "pick",
+   "sel": ".segmented-lg",
+   "icon": "👆",
+   "en": [
+    "Pick a plan",
+    "Choose one of your plans to see what it does to your soil."
+   ],
+   "ur": [
+    "منصوبہ چنیں",
+    "اپنا کوئی منصوبہ چنیں اور دیکھیں کہ وہ آپ کی مٹی کے ساتھ کیا کرتا ہے۔"
+   ]
+  },
+  {
+   "id": "verdict",
+   "sel": ".verdicts",
+   "icon": "🌱",
+   "en": [
+    "Better or worse soil?",
+    "Whether the soil's organic matter goes up or down, and how much nitrogen is left for the next crop."
+   ],
+   "ur": [
+    "مٹی بہتر ہوگی یا خراب؟",
+    "مٹی کا نامیاتی مادہ بڑھے گا یا گھٹے گا، اور اگلی فصل کے لیے کتنی نائٹروجن بچے گی۔"
+   ]
+  },
+  {
+   "id": "steps",
+   "sel": ".soil-steps",
+   "icon": "🔁",
+   "en": [
+    "Season by season",
+    "What each crop does to the soil. Up arrows help the soil, down arrows take from it."
+   ],
+   "ur": [
+    "سیزن بہ سیزن",
+    "ہر فصل مٹی کے ساتھ کیا کرتی ہے۔ اوپر کا تیر مٹی کو فائدہ دیتا ہے، نیچے کا تیر اس سے لیتا ہے۔"
+   ]
+  },
+  {
+   "id": "compare",
+   "sel": ".cmp",
+   "icon": "⚖️",
+   "en": [
+    "Compare plans",
+    "All your plans side by side, so you can choose the one that keeps your land healthiest."
+   ],
+   "ur": [
+    "منصوبوں کا موازنہ",
+    "آپ کے سب منصوبے ساتھ ساتھ، تاکہ آپ وہ چنیں جو آپ کی زمین کو سب سے صحت مند رکھے۔"
+   ]
+  }
+ ]
+}

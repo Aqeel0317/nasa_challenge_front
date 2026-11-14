@@ -21,6 +21,9 @@ function toCsv(rotations) {
   return [head.join(","), ...rows.map((row) => head.map((h) => `"${row[h]}"`).join(","))].join("\n");
 }
 
+// The score the plans are ranked by: today (70%) and the 2041-2050 climate (30%)
+const rankScore = (p) => 0.7 * p.total + 0.3 * (p.future_total ?? p.total);
+
 export default function PlansPage({ result, selected, setSelected, go }) {
   const { t, crop, explain } = useI18n();
   const plans = result.rotations;
@@ -40,6 +43,7 @@ export default function PlansPage({ result, selected, setSelected, go }) {
         </>}
       />
 
+      {/* close scores: show a decimal so the ranking is visible */}
       {!plans.length ? (
         <div className="notice">{t("noRotation")}</div>
       ) : (
@@ -51,7 +55,7 @@ export default function PlansPage({ result, selected, setSelected, go }) {
                 <span className="plan-item-head">
                   <span className="plan-item-name">{t("option", { n: p.rank })}</span>
                   {i === 0 && <span className="badge">{t("bestMatch")}</span>}
-                  <bdi className="plan-item-score num">{Math.round(p.total * 100)}</bdi>
+                  <bdi className="plan-item-score num">{(rankScore(p) * 100).toFixed(new Set(plans.map((x) => Math.round(rankScore(x) * 100))).size < plans.length ? 1 : 0)}</bdi>
                 </span>
                 <span className="plan-item-crops">
                   {p.sequence.map((c, j) => (

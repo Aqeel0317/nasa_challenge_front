@@ -1,9 +1,16 @@
-import { useState } from "react";
-import { CalendarCheck, Layers, MapPin, MoreHorizontal, Sprout, SlidersHorizontal, LineChart, Tractor } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CirclePlay, CalendarCheck, Layers, MapPin, MoreHorizontal, Sprout, SlidersHorizontal, LineChart, Tractor } from "lucide-react";
 import { useI18n } from "../i18n.jsx";
 import { fieldLabel } from "../weather.js";
 import LanguageSwitch from "./LanguageSwitch.jsx";
 import Brand from "./Brand.jsx";
+import Guide, { hasGuide } from "./farm/Guide.jsx";
+import PAGES from "./farm/guideSteps.json";
+
+// Pages whose narrated guide has already opened by itself once
+const SEEN_KEY = "aapkakhet-guided-pages";
+const seen = () => { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || "[]"); } catch { return []; } };
+const markSeen = (p) => { try { localStorage.setItem(SEEN_KEY, JSON.stringify([...new Set([...seen(), p])])); } catch { /* ignore */ } };
 
 // Farmer menu: three everyday places, the expert pages under "More".
 const NAV = [
@@ -22,6 +29,21 @@ export default function AppShell({ page, go, hasResult, form, children }) {
   const { t, lang } = useI18n();
   const inMore = MORE.some((m) => m.id === page);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [guide, setGuide] = useState(null);
+  // First visit to a page: open its guide once its main parts are on screen.
+  // (Today's first visit is handled by the Today page: guide, then farm setup.)
+  useEffect(() => {
+    setGuide(null);
+    if (!hasGuide(page) || page === "today" || seen().includes(page)) return undefined;
+    const first = PAGES[page].find((s) => s.sel)?.sel;
+    const t0 = Date.now();
+    const id = setInterval(() => {
+      const ready = first && document.querySelector(first) && !document.querySelector(".onb, .guide");
+      if (ready) { clearInterval(id); setTimeout(() => { markSeen(page); setGuide(page); }, 900); }
+      else if (Date.now() - t0 > 30000) clearInterval(id);
+    }, 400);
+    return () => clearInterval(id);
+  }, [page]);
   const item = ({ id, icon: Icon, to, needsResult }) => {
     const locked = needsResult && !hasResult;
     const current = page === id;
@@ -61,6 +83,13 @@ export default function AppShell({ page, go, hasResult, form, children }) {
       </nav>
 
       <main id="main" className="main" tabIndex={-1}>{children}</main>
+
+      {hasGuide(page) && !guide && (
+        <button type="button" className="guide-fab" onClick={() => { markSeen(page); setGuide(page); }}>
+          <CirclePlay size={20} aria-hidden="true" /><span>{t("guide_open")}</span>
+        </button>
+      )}
+      {guide && <Guide key={guide} page={guide} onClose={() => setGuide(null)} />}
     </div>
   );
 }

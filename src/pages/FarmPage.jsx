@@ -206,7 +206,6 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
     <div className="page page-wide">
       <PageHeader title={today ? t("today_pageTitle") : t("farmTitle")} lead={today ? t("today_pageLead") : t("farmLead")} actions={today ? (
         <div className="today-actions-head">
-          <button type="button" className="btn btn-primary" onClick={() => setGuide("again")}>▶ {t("guide_open")}</button>
           <button type="button" className="btn" onClick={() => setOnb(0)}>✏️ {t("onb_edit")}</button>
           <button type="button" className="btn btn-quiet" onClick={() => setOnb(3)}>ℹ️ {t("onb_dataLink")}</button>
         </div>

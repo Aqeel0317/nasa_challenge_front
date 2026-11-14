@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 import { useI18n } from "../../i18n.jsx";
-import STEPS from "./guideSteps.json";
+import PAGES from "./guideSteps.json";
 import "./guide.css";
 
 // "How to use": a narrated, step-by-step walk through the real Today screen.
@@ -20,18 +20,20 @@ const UI = {
 const visible = (el) => el && el.getClientRects().length > 0;
 const MUTE_KEY = "aapkakhet-guide-mute";
 
-export default function Guide({ onClose, thenSetup = false }) {
+export const hasGuide = (page) => Boolean(PAGES[page]);
+
+export default function Guide({ page = "today", onClose, thenSetup = false }) {
   const { lang } = useI18n();
   const L = lang === "ur" ? "ur" : "en";
   const ui = UI[L];
-  const [steps] = useState(() => STEPS.filter((s) => s.id === "intro" || visible(document.querySelector(s.sel))));
+  const [steps] = useState(() => (PAGES[page] || []).filter((s) => s.id === "intro" || visible(document.querySelector(s.sel))));
   const [i, setI] = useState(0);
   const [box, setBox] = useState(null);
   const [playing, setPlaying] = useState(true);
   const [talking, setTalking] = useState(false);
   const [mute, setMute] = useState(() => { try { return localStorage.getItem(MUTE_KEY) === "1"; } catch { return false; } });
   const [shown, setShown] = useState(false);
-  const [started, setStarted] = useState(false);
+  const [started, setStarted] = useState(() => !(PAGES[page] || [])[0] || PAGES[page][0].id !== "intro");
   const audio = useRef(null);
   const step = steps[i];
   const intro = step?.id === "intro";
@@ -75,7 +77,7 @@ export default function Guide({ onClose, thenSetup = false }) {
     const a = audio.current || new Audio();
     audio.current = a;
     a.pause();
-    a.src = `/guide/${L}-${step.id}.mp3`;
+    a.src = `/guide/${L}-${page}-${step.id}.mp3`;
     a.muted = mute;
     let t = 0;
     const onEnd = () => { setTalking(false); if (!last) t = setTimeout(next, 1100); };
@@ -101,7 +103,7 @@ export default function Guide({ onClose, thenSetup = false }) {
 
   const begin = () => {
     // the first tap unlocks sound in the browser, then the intro speaks
-    const a = new Audio(`/guide/${L}-intro.mp3`);
+    const a = new Audio(`/guide/${L}-${page}-intro.mp3`);
     audio.current = a;
     a.muted = mute;
     a.onplaying = () => setTalking(true);
@@ -145,7 +147,7 @@ export default function Guide({ onClose, thenSetup = false }) {
   else if (hole.top - cardH - 16 > 0) pos = { top: hole.top - cardH - 16 };
   else pos = { bottom: 16 };
   const left = phone ? 12 : !hole ? Math.max(16, (vw - 460) / 2) : Math.min(Math.max(16, hole.left + Math.min(40, hole.width / 4)), vw - 476);
-  const pct = ((i + (talking ? 0.5 : 0)) / Math.max(1, steps.length - 1)) * 100;
+  const pct = ((i + (talking ? 0.5 : 1)) / steps.length) * 100;
 
   return (
     <div className={`guide ${shown ? "is-in" : ""} ${hole ? "" : "no-hole"}`} dir={L === "ur" ? "rtl" : "ltr"}
@@ -170,7 +172,7 @@ export default function Guide({ onClose, thenSetup = false }) {
         <div className="guide-card" key={step.id} style={{ ...pos, left, right: phone ? 12 : "auto" }}>
           <div className="guide-progress"><i style={{ width: `${pct}%` }} /></div>
           <div className="guide-top">
-            <span className="guide-step">{intro ? "" : ui.of(i, steps.length - 1)}</span>
+            <span className="guide-step">{intro ? "" : steps[0]?.id === "intro" ? ui.of(i, steps.length - 1) : ui.of(i + 1, steps.length)}</span>
             <span className={`guide-wave ${talking && !mute ? "on" : ""}`} aria-hidden="true"><i /><i /><i /><i /><i /></span>
             <button type="button" className="guide-icon" onClick={() => setMute((m) => !m)} aria-label={mute ? ui.unmute : ui.mute}>
               {mute ? <VolumeX size={18} /> : <Volume2 size={18} />}
