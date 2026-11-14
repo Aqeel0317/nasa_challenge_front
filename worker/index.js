@@ -30,4 +30,10 @@ export default {
     // Everything else is the single-page app (unknown paths fall back to index.html).
     return env.ASSETS.fetch(request);
   },
+
+  // Every 10 minutes: ping the API so the free Azure plan does not go to sleep
+  // (a cold start takes ~30 s, which a first-time visitor would feel).
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(fetch(new URL("/api/health", env.API_ORIGIN)).catch(() => {}));
+  },
 };

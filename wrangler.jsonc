@@ -14,5 +14,7 @@
   "vars": {
     "API_ORIGIN": "https://aapkakhet-api.azurewebsites.net"
   },
+  // Keep the free-tier API warm (see scheduled() in worker/index.js)
+  "triggers": { "crons": ["*/10 * * * *"] },
   "observability": { "enabled": true }
 }
