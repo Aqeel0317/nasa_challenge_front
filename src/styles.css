@@ -1990,3 +1990,6 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
   .today-actions-head { inline-size: 100%; }
   .today-actions-head .btn { flex: 1; justify-content: center; }
 }
+
+.safe-fail { min-block-size: 60vh; display: grid; place-content: center; justify-items: center; gap: .8rem; padding: 2rem 16px; text-align: center; color: var(--ink, #1d2a22); }
+.safe-fail .safe-ur { font-family: "Noto Nastaliq Urdu", serif; font-size: 1.3rem; line-height: 2; }

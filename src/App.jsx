@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import { Component, Suspense, lazy as reactLazy, useCallback, useEffect, useState } from "react";
 import { AlertTriangle, Layers, RotateCw } from "lucide-react";
 import { getCrops, getRotations } from "./api.js";
 import { useI18n } from "./i18n.jsx";
@@ -8,6 +8,26 @@ import AppShell from "./components/AppShell.jsx";
 import { Button, EmptyState } from "./components/ui.jsx";
 import BrandLoader from "./components/BrandLoader.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
+
+// After a new deploy, a page that was already open asks for code files that no
+// longer exist. Reload once to pick up the new build instead of showing a blank screen.
+const RELOAD_KEY = "aapkakhet-chunk-reload";
+function reloadOnce() {
+  try {
+    if (sessionStorage.getItem(RELOAD_KEY)) return false;
+    sessionStorage.setItem(RELOAD_KEY, "1");
+  } catch { /* storage blocked: still try one reload */ }
+  window.location.reload();
+  return true;
+}
+if (typeof window !== "undefined") {
+  window.addEventListener("vite:preloadError", (e) => { if (reloadOnce()) e.preventDefault(); });
+  window.addEventListener("load", () => setTimeout(() => { try { sessionStorage.removeItem(RELOAD_KEY); } catch { /* ignore */ } }, 10000));
+}
+const lazy = (load) => reactLazy(() => load().catch((err) => {
+  if (reloadOnce()) return new Promise(() => {});   // the reload takes over
+  throw err;
+}));
 
 // Everything after the landing page loads on demand, so the first visit only
 // downloads the landing page (charts and the 3D farm come later, when needed).
@@ -77,8 +97,8 @@ export default function App() {
   const openApp = useCallback(() => go("today", { replace: true }), [go]);
   // The landing and loading pages sit outside the app shell.
   if (page === "home") return <LandingPage onStart={() => go("start")} />;
-  if (page === "tour") return <Suspense fallback={<BrandLoader />}><TourPage onExit={() => go("")} /></Suspense>;
-  if (page === "start") return <Suspense fallback={<BrandLoader />}><StartPage onDone={openApp} /></Suspense>;
+  if (page === "tour") return <Safe key="tour"><Suspense fallback={<BrandLoader />}><TourPage onExit={() => go("")} /></Suspense></Safe>;
+  if (page === "start") return <Safe key="start"><Suspense fallback={<BrandLoader />}><StartPage onDone={openApp} /></Suspense></Safe>;
 
   const safeForm = { ...form, allowed_crops: form.allowed_crops || [] };
   let content;
@@ -117,7 +137,7 @@ export default function App() {
   return (
     <AppShell page={page === "setup" ? "setup" : page} go={go} hasResult={!!result} form={form}>
       {error && page === "setup" && <div className="notice notice-top">{error}</div>}
-      <Suspense fallback={<div className="page"><BrandLoader /></div>}>{content}</Suspense>
+      <Safe key={page}><Suspense fallback={<div className="page"><BrandLoader /></div>}>{content}</Suspense></Safe>
     </AppShell>
   );
 }
@@ -133,4 +153,21 @@ function LoadingState() {
       />
     </div>
   );
+}
+
+// Never leave the farmer on a blank screen: if a page fails, say so and offer a reload.
+class Safe extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(err) { console.error(err); }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div className="safe-fail" role="alert">
+        <p className="safe-ur" lang="ur" dir="rtl">کچھ غلط ہو گیا۔ دوبارہ کوشش کریں۔</p>
+        <p>Something went wrong loading this page.</p>
+        <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>↻ Reload / دوبارہ کھولیں</button>
+      </div>
+    );
+  }
 }
