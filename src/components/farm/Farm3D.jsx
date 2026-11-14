@@ -230,8 +230,12 @@ function buildScene(container, fields) {
   const camera = new THREE.PerspectiveCamera(42, 1, 0.5, 1500);
   camera.position.set(62, 70, 104);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const phone = window.matchMedia("(max-width: 760px)").matches;
+  const renderer = new THREE.WebGLRenderer({ antialias: !phone || window.devicePixelRatio < 2, powerPreference: "high-performance" });
+  // Phones draw at a lower pixel density: looks the same, much less work.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, phone ? 1.5 : 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;   // film-like light and colour
+  renderer.toneMappingExposure = dark ? 0.95 : 1.08;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   container.appendChild(renderer.domElement);
@@ -246,64 +250,151 @@ function buildScene(container, fields) {
   controls.minDistance = 20;
   controls.maxDistance = 300;
 
-  const hemi = new THREE.HemisphereLight(dark ? "#b9cbd6" : "#eef6ff", "#6f5a3a", dark ? 1.1 : 1.6);
+  // Sky dome: deep blue overhead fading to a pale, hazy horizon
+  const domeGeo = new THREE.SphereGeometry(900, 32, 16);
+  const top = new THREE.Color(dark ? "#0f1f2c" : "#5d9ad0"), horizon = new THREE.Color(dark ? "#2b3c44" : "#e4eef0");
+  const cols = [];
+  const pa = domeGeo.attributes.position;
+  for (let k = 0; k < pa.count; k += 1) {
+    const h = Math.max(0, pa.getY(k) / 900);
+    const c = horizon.clone().lerp(top, Math.pow(h, 0.55));
+    cols.push(c.r, c.g, c.b);
+  }
+  domeGeo.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
+  const dome = new THREE.Mesh(domeGeo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, toneMapped: false }));
+  scene.add(dome);
+  scene.fog.color.copy(horizon);
+
+  const hemi = new THREE.HemisphereLight(dark ? "#b9cbd6" : "#dfeeff", "#7a6040", dark ? 1.0 : 1.35);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight("#fff4df", dark ? 1.6 : 2.4);
-  sun.position.set(-70, 120, 60);
+  const sun = new THREE.DirectionalLight("#ffeccc", dark ? 1.7 : 2.9);
+  sun.position.set(-70, 110, 55);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.mapSize.set(phone ? 1024 : 2048, phone ? 1024 : 2048);
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.02;
   Object.assign(sun.shadow.camera, { left: -90, right: 90, top: 90, bottom: -90, near: 10, far: 360 });
   scene.add(sun);
 
-  const flat = (w, h, color, y = 0) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ color, roughness: 1 }));
+  // Ground textures, drawn once on small canvases (no image downloads)
+  const tex = (draw, repeat) => {
+    const c = document.createElement("canvas"); c.width = c.height = 256;
+    draw(c.getContext("2d"), rng(11));
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat);
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    return t;
+  };
+  const speckle = (g, r, base, colors, n) => {
+    g.fillStyle = base; g.fillRect(0, 0, 256, 256);
+    for (let k = 0; k < n; k += 1) {
+      g.fillStyle = colors[Math.floor(r() * colors.length)];
+      g.globalAlpha = 0.25 + r() * 0.5;
+      g.fillRect(r() * 256, r() * 256, 1 + r() * 3, 1 + r() * 3);
+    }
+    g.globalAlpha = 1;
+  };
+  const grassTex = tex((g, r) => speckle(g, r, dark ? "#3c5733" : "#86a95f", ["#6f9450", "#9ab96a", "#5e8443", "#a9c47a", "#7d9c55"], 5200), 70);
+  const yardTex = tex((g, r) => speckle(g, r, "#cdb68c", ["#bfa57a", "#d9c49c", "#b39468", "#e2d0ab"], 4200), 10);
+  // Ploughed soil: light furrows the crop colour sits on (tinted per day by the soil colour)
+  const furrowTex = tex((g, r) => {
+    speckle(g, r, "#e9e2d6", ["#d8cfc0", "#f4efe6", "#cfc5b4"], 3000);
+    for (let y = 0; y < 256; y += 8) {
+      g.fillStyle = "rgba(90,70,45,.22)"; g.fillRect(0, y, 256, 3);
+      g.fillStyle = "rgba(255,255,255,.18)"; g.fillRect(0, y + 3, 256, 1);
+    }
+  }, 4);
+
+  const ground = (w, h, map, y = 0, color = "#ffffff") => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshLambertMaterial({ color, map }));
     m.rotation.x = -Math.PI / 2; m.position.y = y; m.receiveShadow = true; scene.add(m); return m;
   };
-  flat(1400, 1400, dark ? "#3f5a37" : "#8db06a", -0.05);
-  flat(SITE_W + 16, SITE_H + 16, "#d4c196", 0);
+  ground(1600, 1600, grassTex, -0.05);
+  ground(SITE_W + 16, SITE_H + 16, yardTex, 0);
 
-  // Watercourse along the top, and between the fields
-  const waterMat = new THREE.MeshStandardMaterial({ color: "#4f86a8", roughness: 0.2, metalness: 0.1 });
+  // Water with a sun glint (Phong highlight is cheap and looks wet)
+  const waterMat = new THREE.MeshPhongMaterial({ color: "#3f7ea6", specular: "#ffffff", shininess: 90, transparent: true, opacity: 0.92 });
   const channel = new THREE.Mesh(new THREE.BoxGeometry(SITE_W + 16, 0.4, 3), waterMat);
-  channel.position.set(0, -0.1, -SITE_H / 2 - 6);
+  channel.position.set(0, -0.05, -SITE_H / 2 - 6);
   scene.add(channel);
   const mid = toWorld(PLOT + 4, 0);
   const between = new THREE.Mesh(new THREE.BoxGeometry(2, 0.4, FARM_H), waterMat);
-  between.position.set(mid.x, -0.1, 0);
+  between.position.set(mid.x, -0.05, 0);
   scene.add(between);
 
-  // Farmhouse and tube-well in the yard
-  const house = toWorld(FARMHOUSE.x + 9, FARMHOUSE.y + 12);
-  const walls = new THREE.Mesh(new THREE.BoxGeometry(14, 6, 10), new THREE.MeshStandardMaterial({ color: "#d8c7b0" }));
-  walls.position.set(house.x, 3, house.z); walls.castShadow = true; scene.add(walls);
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(10.5, 4, 4), new THREE.MeshStandardMaterial({ color: "#9b5b3c", flatShading: true }));
-  roof.rotation.y = Math.PI / 4; roof.scale.set(1, 1, 0.75); roof.position.set(house.x, 8, house.z); roof.castShadow = true; scene.add(roof);
-  const well = toWorld(TUBEWELL.x + 9, TUBEWELL.y + 14);
-  const pond = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 0.5, 24), new THREE.MeshStandardMaterial({ color: "#5b97bd", roughness: 0.2 }));
-  pond.position.set(well.x, 0.1, well.z + 2); scene.add(pond);
-  const pump = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 4), new THREE.MeshStandardMaterial({ color: "#8a8f95" }));
-  pump.position.set(well.x, 1.5, well.z - 8); pump.castShadow = true; scene.add(pump);
+  // Earth ridges (watt) around every field, as on Punjab farms
+  const bundMat = new THREE.MeshLambertMaterial({ color: "#a98a5e" });
+  const bundGeo = new THREE.BoxGeometry(1, 0.7, 1);
+  const bunds = new THREE.InstancedMesh(bundGeo, bundMat, fields.length * 4);
+  fields.forEach((_, idx) => {
+    const c = fieldCentre(idx), h = PLOT / 2 + 0.4;
+    [[0, -h, PLOT + 1.6, 1.1], [0, h, PLOT + 1.6, 1.1], [-h, 0, 1.1, PLOT + 1.6], [h, 0, 1.1, PLOT + 1.6]].forEach(([dx, dz, sx, sz], k) => {
+      bunds.setMatrixAt(idx * 4 + k, new THREE.Matrix4().compose(new THREE.Vector3(c.x + dx, 0.3, c.z + dz), new THREE.Quaternion(), new THREE.Vector3(sx, 1, sz)));
+    });
+  });
+  bunds.receiveShadow = true;
+  scene.add(bunds);
 
-  // Trees around the farm
+  // Village house: flat mud-plaster roof with a low parapet, a door and a window
+  const house = toWorld(FARMHOUSE.x + 9, FARMHOUSE.y + 12);
+  const mud = new THREE.MeshLambertMaterial({ color: "#cfa97c" });
+  const walls = new THREE.Mesh(new THREE.BoxGeometry(14, 5.5, 10), mud);
+  walls.position.set(house.x, 2.75, house.z); walls.castShadow = true; walls.receiveShadow = true; scene.add(walls);
+  const roofSlab = new THREE.Mesh(new THREE.BoxGeometry(14.6, 0.5, 10.6), new THREE.MeshLambertMaterial({ color: "#b8926a" }));
+  roofSlab.position.set(house.x, 5.75, house.z); roofSlab.castShadow = true; scene.add(roofSlab);
+  const parapet = new THREE.Mesh(new THREE.BoxGeometry(14.6, 0.9, 0.4), mud);
+  parapet.position.set(house.x, 6.4, house.z + 5.1); scene.add(parapet);
+  const door = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3.4, 0.2), new THREE.MeshLambertMaterial({ color: "#5a3a24" }));
+  door.position.set(house.x - 3, 1.7, house.z + 5.05); scene.add(door);
+  const win = new THREE.Mesh(new THREE.BoxGeometry(2, 1.4, 0.2), new THREE.MeshLambertMaterial({ color: "#2f3d45" }));
+  win.position.set(house.x + 3, 3, house.z + 5.05); scene.add(win);
+
+  // Tube-well: a small brick room pouring into a pond
+  const well = toWorld(TUBEWELL.x + 9, TUBEWELL.y + 14);
+  const pond = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 0.5, 32), waterMat);
+  pond.position.set(well.x, 0.1, well.z + 2); scene.add(pond);
+  const pondRim = new THREE.Mesh(new THREE.TorusGeometry(7.2, 0.5, 6, 32), new THREE.MeshLambertMaterial({ color: "#9b7b55" }));
+  pondRim.rotation.x = Math.PI / 2; pondRim.position.set(well.x, 0.3, well.z + 2); scene.add(pondRim);
+  const pump = new THREE.Mesh(new THREE.BoxGeometry(5, 3.6, 4.5), new THREE.MeshLambertMaterial({ color: "#a65a3c" }));
+  pump.position.set(well.x, 1.8, well.z - 8); pump.castShadow = true; scene.add(pump);
+  const pumpRoof = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.4, 5.1), new THREE.MeshLambertMaterial({ color: "#8a8f95" }));
+  pumpRoof.position.set(well.x, 3.8, well.z - 8); scene.add(pumpRoof);
+
+  // Trees: near trees have three-lobed crowns in varied greens; a far tree line closes the horizon
   const treeRand = rng(7);
-  const N = 54;
-  const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.5, 4, 5),
-    new THREE.MeshStandardMaterial({ color: "#6b4f35" }), N);
-  const crownMat = new THREE.MeshStandardMaterial({ color: dark ? "#2f5530" : "#4c7d3f", flatShading: true });
-  const crowns = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(3.2, 0), crownMat, N);
-  const m = new THREE.Matrix4();
+  const N = 54, FAR = 140;
+  const trunkMat = new THREE.MeshLambertMaterial({ color: "#5e4430" });
+  const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.3, 0.55, 5, 6), trunkMat, N);
+  const crownMat = new THREE.MeshLambertMaterial({ color: "#ffffff", flatShading: true });
+  const crowns = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(2.6, 1), crownMat, N * 3);
+  const farMat = new THREE.MeshLambertMaterial({ color: "#ffffff", flatShading: true });
+  const far = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(4, 0), farMat, FAR);
+  const greens = dark ? ["#2f5530", "#3a6234", "#284a2a"] : ["#4f8040", "#5f9147", "#3f6f36", "#6b9a4c"];
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
   for (let i = 0; i < N; i += 1) {
     const a = (i / N) * Math.PI * 2 + treeRand() * 0.08;
     const r = 95 + treeRand() * 50;
     const s = 0.9 + treeRand() * 0.8;
     const x = Math.cos(a) * r, z = Math.sin(a) * r * 0.85;
-    m.compose(new THREE.Vector3(x, 2 * s, z), new THREE.Quaternion(), new THREE.Vector3(s, s, s));
-    trunks.setMatrixAt(i, m);
-    m.compose(new THREE.Vector3(x, 5.6 * s, z), new THREE.Quaternion(), new THREE.Vector3(s, s * 1.2, s));
-    crowns.setMatrixAt(i, m);
+    trunks.setMatrixAt(i, m.compose(v.set(x, 2.5 * s, z), q, sc.set(s, s, s)));
+    for (let k = 0; k < 3; k += 1) {
+      const ang = (k / 3) * Math.PI * 2 + treeRand();
+      const off = k === 0 ? 0 : 1.4 * s;
+      crowns.setMatrixAt(i * 3 + k, m.compose(v.set(x + Math.cos(ang) * off, (5.8 + (k === 0 ? 1.4 : 0)) * s, z + Math.sin(ang) * off),
+        q.setFromEuler(new THREE.Euler(treeRand(), treeRand() * 3, 0)), sc.setScalar(s * (k === 0 ? 1.15 : 0.95))));
+      crowns.setColorAt(i * 3 + k, new THREE.Color(greens[Math.floor(treeRand() * greens.length)]).multiplyScalar(0.9 + treeRand() * 0.2));
+    }
   }
-  crowns.castShadow = true;
-  scene.add(trunks, crowns);
+  q.identity();
+  for (let i = 0; i < FAR; i += 1) {
+    const a = (i / FAR) * Math.PI * 2 + treeRand() * 0.05;
+    const r = 230 + treeRand() * 70;
+    const s = 1 + treeRand() * 1.2;
+    far.setMatrixAt(i, m.compose(v.set(Math.cos(a) * r, 3.5 * s, Math.sin(a) * r), q, sc.set(s * 1.3, s, s * 1.3)));
+    far.setColorAt(i, new THREE.Color(greens[i % greens.length]).multiplyScalar(0.75));
+  }
+  crowns.castShadow = true; trunks.castShadow = true;
+  scene.add(trunks, crowns, far);
 
   // Rain: short falling streaks over the whole farm
   const rainPos = new Float32Array(RAIN_N * 6);
@@ -326,7 +417,7 @@ function buildScene(container, fields) {
   const plots = fields.map((field, idx) => {
     const c = fieldCentre(idx);
     const soil = new THREE.Mesh(new THREE.PlaneGeometry(PLOT, PLOT),
-      new THREE.MeshStandardMaterial({ color: FALLOW.clone(), roughness: 1 }));
+      new THREE.MeshLambertMaterial({ color: FALLOW.clone(), map: furrowTex }));
     soil.rotation.x = -Math.PI / 2;
     soil.position.set(c.x, 0.03, c.z);
     soil.receiveShadow = true;
@@ -396,7 +487,7 @@ function buildScene(container, fields) {
     return { soil, water, outline, crops, div, label };
   });
 
-  return { scene, camera, renderer, labels, controls, plots, rain, sun, hemi, cracks, skyBase, crownMat, dark };
+  return { scene, camera, renderer, labels, controls, plots, rain, sun, hemi, cracks, furrowTex, skyBase, crownMat, farMat, dome, dark };
 }
 
 // Total rain over the last `n` days up to `day`
@@ -511,6 +602,7 @@ export default function Farm3D({ fields, plots, weather, day, selected, onSelect
     const dry30 = rainSum(weather.rain, day, 30) < 4 && tmax >= 34;
     const sky = world.skyBase.clone().lerp(SKY_HEAT, heat * 0.75).lerp(SKY_STORM, wet * 0.85);
     world.scene.background.copy(sky);
+    world.dome.material.color.set("#ffffff").lerp(new THREE.Color("#ffb37a"), heat * 0.6).lerp(new THREE.Color("#6f7b84"), wet * 0.8);
     world.scene.fog.color.copy(sky);
     world.scene.fog.near = 200 - 140 * Math.max(wet, heat * 0.6);
     world.sun.intensity = (world.dark ? 1.6 : 2.4) * (1 - wet * 0.65) * (1 + heat * 0.25);
@@ -518,7 +610,8 @@ export default function Farm3D({ fields, plots, weather, day, selected, onSelect
     world.rain.visible = rainToday >= 2;
     world.rain.geometry.setDrawRange(0, Math.round(RAIN_N * 2 * Math.min(1, 0.15 + rainToday / 40)));
     world.rainSpeed = 1.2 + Math.min(2, rainToday / 25);
-    world.crownMat.color.set(world.dark ? "#2f5530" : "#4c7d3f").lerp(new THREE.Color("#8a8a4a"), dry30 ? 0.45 : 0);
+    world.crownMat.color.set("#ffffff").lerp(new THREE.Color("#c9b98a"), dry30 ? 0.45 : 0);
+    world.farMat.color.copy(world.crownMat.color);
 
     // Screen effects: heat haze and lightning live in a CSS layer over the canvas
     const fx = fxRef.current;
@@ -594,7 +687,8 @@ export default function Farm3D({ fields, plots, weather, day, selected, onSelect
       const soilWater = growing ? (p.scenario.series.soil_water[day] ?? 50) : (dry30 ? 5 : 40 + wet * 60);
       const cracked = soilWater < 22 && (dry30 || growing);
       const mat = w.soil.material;
-      if ((mat.map !== null) !== cracked) { mat.map = cracked ? world.cracks : null; mat.needsUpdate = true; }
+      const wantMap = cracked ? world.cracks : world.furrowTex;
+      if (mat.map !== wantMap) { mat.map = wantMap; mat.needsUpdate = true; }
       mat.color.copy(cracked ? new THREE.Color("#ffffff")
         : (act.key ? SOIL_DRY.clone().lerp(SOIL_WET, soilWater / 100) : FALLOW.clone().lerp(SOIL_WET, wet * 0.6)));
       const flooded = growing && ((p.flooded && soilWater >= 75) || p.scenario.waterlog[day] === 1);

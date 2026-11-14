@@ -16,6 +16,7 @@ import { FieldBoard, SCENARIO_ICON, ShockPanel } from "../components/farm/FieldB
 import LivePanel, { useLive } from "../components/farm/LivePanel.jsx";
 import { autoScenario, useForecast } from "../weather.js";
 import LocationPicker from "../components/farm/LocationPicker.jsx";
+import TodayActions from "../components/farm/TodayActions.jsx";
 import FarmAdvice, { HowSteps } from "../components/farm/FarmAdvice.jsx";
 
 const Farm3D = lazy(() => import("../components/farm/Farm3D.jsx"));
@@ -36,7 +37,10 @@ class WebGLGuard extends Component {
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
-export default function FarmPage({ fieldForm }) {
+// view "today": what to do today, this week's weather and the year's risk.
+// view "fields": the farmer's fields, disasters, the 3D farm and the season charts.
+export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
+  const today = pageView === "today";
   const { t, lang, crop } = useI18n();
   const [stored, setSettings] = useStoredState("aapkakhet-farm-v2", DEFAULTS);
   const settings = { ...DEFAULTS, ...stored, fields: stored.fields?.length ? stored.fields : DEFAULTS.fields,
@@ -177,7 +181,7 @@ export default function FarmPage({ fieldForm }) {
 
   return (
     <div className="page page-wide">
-      <PageHeader title={t("farmTitle")} lead={t("farmLead")} actions={
+      <PageHeader title={today ? t("today_pageTitle") : t("farmTitle")} lead={today ? t("today_pageLead") : t("farmLead")} actions={today ? null :
         <div className="segmented mode-switch" role="group" aria-label={t("modeLabel")}>
           {["simple", "detailed"].map((m) => (
             <button key={m} type="button" aria-pressed={(simple ? "simple" : "detailed") === m}
@@ -185,11 +189,12 @@ export default function FarmPage({ fieldForm }) {
           ))}
         </div>
       } />
-      <HowSteps />
+      {!today && <HowSteps />}
 
       <LocationPicker place={settings.place} lat={settings.lat} lon={settings.lon}
                       onPick={(p) => setSettings((s) => ({ ...DEFAULTS, ...s, lat: p.lat, lon: p.lon, place: p.name }))} />
-      <LivePanel lat={settings.lat} lon={settings.lon} place={settings.place} />
+      {today && data && <TodayActions data={data} fields={fields} fc={fc} nasaDays={liveNasa?.data?.weather?.days || []} />}
+      {today && <LivePanel lat={settings.lat} lon={settings.lon} place={settings.place} />}
 
       {data && <FarmAdvice data={data} fields={fields} scenario={settings.scenario} onScenario={watchScenario} now={auto} />}
 
@@ -197,6 +202,14 @@ export default function FarmPage({ fieldForm }) {
         <div className="refresh-pill" role="status"><MiniBars label={t("refreshing")} /> <span>{stale ? t("staleNote") : t("refreshing")}</span></div>
       )}
 
+      {today && (
+        <div className="today-next">
+          <button type="button" className="btn btn-primary" onClick={() => go?.("farm")}>🚜 {t("today_toFields")}</button>
+          <button type="button" className="btn" onClick={() => go?.("setup")}>🌱 {t("today_toPlan")}</button>
+        </div>
+      )}
+
+      {!today && (<>
       {/* ---------------- 1. the farmer's own fields ---------------- */}
       <FieldBoard fields={fields} setFields={(f) => set("fields", f)} data={data}
                   selected={sel} onSelect={setSelected} unit={unit.v} />
@@ -284,10 +297,11 @@ export default function FarmPage({ fieldForm }) {
           </div>
         </details>
       </Panel>
+      </>)}
 
       {error && <div className="notice">{error}</div>}
 
-      {data && (
+      {data && !today && (
         <>
           {/* ---------------- 3. what it would cost ---------------- */}
           <ShockPanel data={data} fields={fields} scenario={settings.scenario} onScenario={watchScenario} />

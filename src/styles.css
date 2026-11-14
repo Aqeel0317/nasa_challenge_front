@@ -1913,3 +1913,32 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
 .kind-observed { background: var(--good); }
 .kind-forecast { background: #3f7fae; }
 .kind-expected { background: #7d8a81; }
+
+/* ---------- Today on your farm ---------- */
+.today-card { display: grid; gap: .9rem; padding: clamp(1rem, 2.5vw, 1.5rem); border-radius: 20px; background: var(--surface); border: 2px solid var(--canopy); box-shadow: 0 16px 40px -28px rgba(0, 0, 0, .45); }
+.today-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; }
+.today-head h2 { font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; color: var(--canopy); }
+[dir="rtl"] .today-head h2 { font-family: "Noto Nastaliq Urdu", serif; line-height: 1.9; }
+.today-kicker { font-size: .9rem; font-weight: 600; color: var(--muted); }
+.today-list { display: grid; gap: .55rem; list-style: none; margin: 0; padding: 0; }
+.today-item { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .8rem; align-items: start; padding: .8rem 1rem; border-radius: 14px; border: 1px solid var(--line); border-inline-start: 6px solid var(--line); background: var(--surface-2); }
+.today-item.lvl-risk { border-inline-start-color: var(--risk); background: var(--risk-soft); }
+.today-item.lvl-watch { border-inline-start-color: var(--watch); background: var(--watch-soft); }
+.today-item.lvl-good { border-inline-start-color: var(--good); }
+.today-item.lvl-info { border-inline-start-color: var(--rabi); }
+.today-ic { font-size: 1.8rem; line-height: 1.1; }
+.today-line { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: 1.05rem; }
+.today-pill { font-size: .85rem; padding: .15rem .6rem; border-radius: 999px; color: #fff; background: var(--good); }
+.lvl-risk .today-pill { background: var(--risk); }
+.lvl-watch .today-pill { background: var(--watch); }
+.lvl-info .today-pill { background: var(--rabi); }
+.today-why { color: var(--ink); opacity: .85; margin-top: .15rem; }
+.today-off { padding: .8rem 1rem; border-radius: 12px; background: var(--surface-2); color: var(--muted); }
+.today-next { display: flex; flex-wrap: wrap; gap: .6rem; }
+.today-next .btn { min-height: 52px; font-size: 1.02rem; }
+.nav-more-list { display: grid; gap: .1rem; padding-inline-start: .6rem; border-inline-start: 2px solid var(--line); margin-inline-start: 1rem; }
+@media (max-width: 760px) {
+  .today-next .btn { flex: 1 1 100%; justify-content: center; }
+  .nav-more-list { position: fixed; bottom: calc(4.6rem + env(safe-area-inset-bottom, 0px)); inset-inline-end: .5rem; z-index: 40; margin: 0; padding: .4rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 12px 30px rgba(0, 0, 0, .25); }
+  .nav-more-list .nav-item { flex-direction: row; justify-content: flex-start; gap: .6rem; padding: .6rem .8rem; font-size: .9rem; }
+}

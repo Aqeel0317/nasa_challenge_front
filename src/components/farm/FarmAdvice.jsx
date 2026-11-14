@@ -62,7 +62,7 @@ export function buildAdvice(data, fields, t, crop, lang) {
 }
 
 // Read text aloud with the phone's own voice, in the page language when it has one.
-function useSpeech(lang) {
+export function useSpeech(lang) {
   const supported = typeof window !== "undefined" && "speechSynthesis" in window;
   const [speaking, setSpeaking] = useState(false);
   const [noVoice, setNoVoice] = useState(false);

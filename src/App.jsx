@@ -74,7 +74,7 @@ export default function App() {
     }
   }
 
-  const openApp = useCallback(() => go("setup", { replace: true }), [go]);
+  const openApp = useCallback(() => go("today", { replace: true }), [go]);
   // The landing and loading pages sit outside the app shell.
   if (page === "home") return <LandingPage onStart={() => go("start")} />;
   if (page === "tour") return <Suspense fallback={<BrandLoader />}><TourPage onExit={() => go("")} /></Suspense>;
@@ -82,9 +82,12 @@ export default function App() {
 
   const safeForm = { ...form, allowed_crops: form.allowed_crops || [] };
   let content;
-  if (page === "farm") {
-    content = <FarmPage fieldForm={result ? form : null} />;
+  if (page === "today") {
+    content = <FarmPage view="today" go={go} fieldForm={result ? form : null} />;
+  } else if (page === "farm") {
+    content = <FarmPage view="fields" go={go} fieldForm={result ? form : null} />;
   } else if (page === "setup" || !["plans", "field", "crops", "soil"].includes(page)) {
+    // ("today" and "farm" are handled above; unknown pages fall back to setup)
     content = (
       <SetupPage step={sub} go={go} form={safeForm} setForm={setForm} crops={crops}
                  onSubmit={findRotations} loading={loading} />
