@@ -11,7 +11,9 @@ const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 const FORECAST_MS = 30 * 60 * 1000;
 export function useForecast(lat, lon) {
   const key = `aapkakhet-fc:${(+lat).toFixed(2)},${(+lon).toFixed(2)}`;
-  const [fc, setFc] = useState(() => read(key)?.data || null);
+  // data is tagged with its place: a forecast is never shown for another location
+  const [state, setState] = useState(() => ({ key, data: read(key)?.data || null }));
+  const setFc = (data) => setState({ key, data });
   useEffect(() => {
     const cached = read(key);
     setFc(cached?.data || null);
@@ -28,8 +30,8 @@ export function useForecast(lat, lon) {
       setFc(data);
     }).catch(() => {});
     return () => { alive = false; };
-  }, [key, lat, lon]);
-  return fc;
+  }, [key, lat, lon]); // eslint-disable-line react-hooks/exhaustive-deps
+  return state.key === key ? state.data : null;
 }
 
 // WMO weather codes -> picture and a translation key

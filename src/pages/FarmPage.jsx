@@ -88,6 +88,7 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go, ope
   const [mode, setMode] = useStoredState("aapkakhet-mode", { v: "simple" });
   const simple = mode.v !== "detailed";
   const runId = useRef(0);
+  const lastFarm = useRef(null);
 
   const set = (k, v) => setSettings((s) => ({ ...DEFAULTS, ...s, [k]: v }));
   const fields = settings.fields;
@@ -112,6 +113,10 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go, ope
     const body = JSON.parse(requestKey);
     if (!body.fields.some((f) => f.kharif || f.rabi)) { setError(t("pickACrop")); return undefined; }
     const cached = readCached(body);
+    // A different farm (place, fields or water) never shows the previous farm's numbers
+    // while its own answer loads; only a change of test weather keeps them on screen.
+    const farmKey = JSON.stringify({ ...body, scenario: 0, temp_offset: 0, rain_pct: 0 });
+    if (lastFarm.current !== farmKey) { lastFarm.current = farmKey; if (!cached) setData(null); }
     if (cached) { setData(cached.data); setError(""); }
     setStale(!!cached && !cached.fresh);
     if (cached?.fresh) { setBusy(false); return undefined; }

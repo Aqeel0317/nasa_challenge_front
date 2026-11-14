@@ -1,4 +1,4 @@
-import { Component, Suspense, lazy as reactLazy, useCallback, useEffect, useState } from "react";
+import { Component, Suspense, lazy as reactLazy, useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, Layers, RotateCw } from "lucide-react";
 import { getCrops, getRotations } from "./api.js";
 import { useI18n } from "./i18n.jsx";
@@ -76,12 +76,19 @@ export default function App() {
   const [profile, setProfile] = useFarmProfile();
   const form = { ...plannerForm, lat: profile.lat, lon: profile.lon, place: profile.place,
     irrigation_mm: irrigationMm(profile), acres: totalAcres(profile) };
+  // Always works on the LATEST settings (a ref), so a slow load that finishes later
+  // (e.g. the crop list) can never write back old priorities over the farmer's choice.
+  const formRef = useRef(form);
+  formRef.current = form;
   const setForm = useCallback((update) => {
-    const next = typeof update === "function" ? update(form) : update;
-    const shared = Object.fromEntries(SHARED.filter((k) => next[k] !== form[k]).map((k) => [k, next[k]]));
+    const cur = formRef.current;
+    const next = typeof update === "function" ? update(cur) : update;
+    const shared = Object.fromEntries(SHARED.filter((k) => next[k] !== cur[k]).map((k) => [k, next[k]]));
     if (Object.keys(shared).length) setProfile((p) => ({ ...p, ...shared }));
-    setPlannerForm(Object.fromEntries(Object.entries(next).filter(([k]) => !SHARED.includes(k) && k !== "acres")));
-  }, [form.lat, form.lon, form.place, form.irrigation_mm, plannerForm]); // eslint-disable-line react-hooks/exhaustive-deps
+    const own = Object.fromEntries(Object.entries(next).filter(([k]) => !SHARED.includes(k) && k !== "acres"));
+    formRef.current = { ...cur, ...next };
+    setPlannerForm(own);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [result, setResult] = useStoredState("rotaterra-result", null, "session");
   const [selected, setSelected] = useState(0);
   const [loading, setLoading] = useState(false);

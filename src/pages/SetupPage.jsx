@@ -136,6 +136,7 @@ function QuickSetup({ go, form, setForm, onSubmit, loading }) {
         {/* 3. What matters most */}
         <section className="panel qs-section" aria-labelledby="qs-q3">
           <h2 className="qs-q" id="qs-q3">{t("qs_q3")}</h2>
+          {!preset && <p className="muted small">{t("customPriorities")}</p>}
           <div className="choice-grid" role="group" aria-labelledby="qs-q3">
             {Object.keys(PRESETS).map((p) => {
               const Icon = PRESET_ICONS[p];

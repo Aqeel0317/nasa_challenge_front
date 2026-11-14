@@ -20,7 +20,11 @@ function readLive(lat, lon) {
 
 // Latest NASA data for a place: the saved copy at once, then a fresh one if it is old.
 export function useLive(lat, lon) {
-  const [live, setLive] = useState(() => readLive(lat, lon));
+  // tagged with its place, so another location's NASA data is never shown
+  const here = storeKey(lat, lon);
+  const [state, setState] = useState(() => ({ here, live: readLive(lat, lon) }));
+  const live = state.here === here ? state.live : null;
+  const setLive = (v) => setState({ here, live: v });
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -38,7 +42,7 @@ export function useLive(lat, lon) {
       }).catch(() => { if (alive) setFailed(true); });
     }, 300);
     return () => { alive = false; clearTimeout(timer); };
-  }, [lat, lon]);
+  }, [lat, lon]); // eslint-disable-line react-hooks/exhaustive-deps
   return { live, failed };
 }
 
@@ -157,7 +161,7 @@ export default function LivePanel({ lat, lon, place }) {
               <li>🛰️ {t("live_smap", { v: smap.value.toFixed(2), date: fmt(smap.date) })}{" "}
                 <a href={smap.url} target="_blank" rel="noopener noreferrer" className="src-link">NASA SMAP</a></li>
             )}
-            {soil != null && <li className="muted small soil-reconcile">ℹ️ {t("soilReconcile")}</li>}
+            {soil != null && <li className="muted small soil-reconcile">ℹ️ {t("soilReconcile", { pct: soil })}</li>}
           </ul>
         </div>
       )}
