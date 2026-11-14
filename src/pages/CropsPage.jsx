@@ -5,8 +5,12 @@ import { Advanced, Level, PageHeader, Panel } from "../components/ui.jsx";
 
 const AXIS = { fill: "var(--muted)", fontSize: 12 };
 const fitLevel = (v) => (v >= 0.75 ? "good" : v >= 0.5 ? "watch" : "risk");
-const trend = (now, fut) => (fut - now > 0.05 ? "up" : fut - now < -0.05 ? "down" : "flat");
-const TREND_ICON = { up: ArrowUp, flat: ArrowRight, down: ArrowDown };
+// fit change by 2041-2050, in points out of 100: clear, slight, or none
+const trend = (now, fut) => {
+  const d = Math.round((fut - now) * 100);
+  return d >= 5 ? "up" : d <= -5 ? "down" : d >= 2 ? "slight_up" : d <= -2 ? "slight_down" : "flat";
+};
+const TREND_ICON = { up: ArrowUp, slight_up: ArrowUp, flat: ArrowRight, slight_down: ArrowDown, down: ArrowDown };
 
 export default function CropsPage({ rows, site }) {
   const { t, crop } = useI18n();
@@ -58,6 +62,13 @@ export default function CropsPage({ rows, site }) {
                       {t(`trend_${tr}`)}
                       <bdi className="num fit-nums">{Math.round(r.now * 100)} → {Math.round(r.future * 100)}/100</bdi>
                     </span>
+                    {(r.hot_days_now != null || r.water_mm_now != null) && (
+                      <span className="fit-why muted small">
+                        {r.hot_days_now != null && t("fitHot", { limit: Math.round(r.heat_limit_c), now: Math.round(r.hot_days_now), fut: Math.round(r.hot_days_future) })}
+                        {r.hot_days_now != null && r.water_mm_now != null && " · "}
+                        {r.water_mm_now != null && t("fitWater", { now: Math.round(r.water_mm_now), fut: Math.round(r.water_mm_future) })}
+                      </span>
+                    )}
                   </li>
                 );
               })}

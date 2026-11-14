@@ -15,7 +15,7 @@ export function buildAdvice(data, fields, t, crop, lang) {
   const money = farmMoney(data, fields);
   const { byKey, normal } = money;
   const ready = money.ready.map(({ f }) => f);
-  const losses = money.shocks.map((r) => ({ sc: r.name, loss: r.loss, pct: r.pct })).sort((a, b) => b.loss - a.loss);
+  const losses = money.shocks.map((r) => ({ sc: r.name, loss: r.loss, pct: r.pct, waterlogDays: r.waterlogDays, maunds: r.maunds })).sort((a, b) => b.loss - a.loss);
   const worst = losses[0];
   const level = worst.pct < 8 ? "good" : worst.pct < 20 ? "watch" : "risk";
   const rotation = (f) => [f.kharif, f.rabi].filter(Boolean).map((k) => crop(k)).join(" → ");
@@ -124,6 +124,8 @@ export default function FarmAdvice({ data, fields, scenario, onScenario, now }) 
             <span className="meter-ic" aria-hidden="true">{ICON[l.sc]}</span>
             <span className="meter-name">{t(`sc_${l.sc}`)}</span>
             <span className="meter-pct"><bdi>{l.pct > 0 ? `−${l.pct}%` : "0%"}</bdi></span>
+            {l.loss > 0 && <span className="meter-sub"><bdi>−{formatRs(l.loss, lang)}</bdi></span>}
+            {l.sc === "flood" && l.waterlogDays > 0 && <span className="meter-sub">💧 {t("shockWaterlogShort", { days: l.waterlogDays })}</span>}
           </button>
         ))}
       </div>

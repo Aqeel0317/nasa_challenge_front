@@ -41,7 +41,17 @@ export default function TodayActions({ data, fields, fc, nasaDays = [] }) {
       if (rain3 >= 8) actions.push({ lvl: "good", icon: "🌧️", pill: t("today_noWater"), head: who, why: t("today_rainComing", { mm: Math.round(rain3) }) });
       else if (sw < 40) actions.push({ lvl: "risk", icon: "💧", pill: t("today_water"), head: who, why: t("today_dry", { pct: Math.round(sw) }) + (nasaSoil != null ? ` ${t("today_nasaSoil", { pct: nasaSoil })}` : "") });
       else if (sw < 60) actions.push({ lvl: "watch", icon: "💧", pill: t("today_soon"), head: who, why: t("today_soonWhy", { pct: Math.round(sw) }) });
-      else actions.push({ lvl: "good", icon: "✅", pill: t("today_noWater"), head: who, why: t("today_enough", { pct: Math.round(sw) }) });
+      else {
+        // when will this field need water? the first day the model's soil water drops below 60%
+        const series = p.scenario.series.soil_water;
+        let j = i + 1;
+        while (j < series.length && j - i <= 45 && (series[j] ?? 100) >= 60) j += 1;
+        const soonDays = j < series.length && j - i <= 45 ? j - i : null;
+        const date = soonDays != null ? new Date(`${data.dates[j]}T00:00:00`).toLocaleDateString(locale, { day: "numeric", month: "long" }) : null;
+        let why = soonDays != null ? t("today_enough_next", { pct: Math.round(sw), days: soonDays, date }) : t("today_enough", { pct: Math.round(sw) });
+        if (nasaSoil != null && nasaSoil < 35) why += ` ${t("today_nasaAreaDry", { pct: nasaSoil })}`;
+        actions.push({ lvl: "good", icon: "✅", pill: t("today_noWater"), head: who, why });
+      }
     } else {
       // next crop to sow in this field
       const next = [f.kharif, f.rabi].map((k) => k && byKey[k]).filter(Boolean)

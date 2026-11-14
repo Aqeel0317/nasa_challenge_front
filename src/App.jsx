@@ -111,6 +111,8 @@ export default function App() {
         farm_acres: farm_acres || acres || null,
         equipment: rest.equipment || [],
         market: rest.market || null,
+        // the farmer's own mandi prices (Rs per maund), by planner crop name
+        prices: Object.fromEntries(Object.entries(profile.prices || {}).filter(([, v]) => v > 0).map(([k, v]) => [ENGINE_NAME[k], v])),
         allowed_crops: form.allowed_crops?.length ? form.allowed_crops : null,
         // a soil test wins; otherwise a named soil type (sandy / loam / clay) sets the texture
         soil_override: use_soil_test ? soil_override : (soil_texture ? TEXTURE[soil_texture] : null),
@@ -128,7 +130,8 @@ export default function App() {
 
   const openApp = useCallback(() => go("today", { replace: true }), [go]);
   // The landing and loading pages sit outside the app shell.
-  if (page === "home") return <LandingPage onStart={() => go("start")} />;
+  // "Test my farm free" goes straight to the farm setup wizard
+  if (page === "home") return <LandingPage onStart={() => go("today/setup")} />;
   if (page === "tour") return <Safe key="tour"><Suspense fallback={<BrandLoader />}><TourPage onExit={() => go("")} /></Suspense></Safe>;
   if (page === "start") return <Safe key="start"><Suspense fallback={<BrandLoader />}><StartPage onDone={openApp} /></Suspense></Safe>;
 
@@ -138,7 +141,7 @@ export default function App() {
     || Math.abs(result._req.lon - form.lon) > 0.005 || result._req.irrigation_mm !== form.irrigation_mm);
   let content;
   if (page === "today") {
-    content = <FarmPage view="today" go={go} fieldForm={result ? form : null} />;
+    content = <FarmPage view="today" go={go} fieldForm={result ? form : null} openSetup={sub === "setup"} />;
   } else if (page === "farm") {
     content = <FarmPage view="fields" go={go} fieldForm={result ? form : null} />;
   } else if (page === "setup" || !["plans", "field", "crops", "soil"].includes(page)) {

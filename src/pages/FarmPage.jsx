@@ -44,7 +44,7 @@ class WebGLGuard extends Component {
 
 // view "today": what to do today, this week's weather and the year's risk.
 // view "fields": the farmer's fields, disasters, the 3D farm and the season charts.
-export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
+export default function FarmPage({ fieldForm, view: pageView = "fields", go, openSetup = false }) {
   const today = pageView === "today";
   // First visit: a short welcome to set up the farm (shown once, can be reopened)
   // First visit: the narrated "How to use" walk-through on the sample farm, then the
@@ -53,8 +53,9 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
     if (pageView !== "today") return false;
     try { return !localStorage.getItem(ONBOARD_KEY); } catch { return false; }
   });
-  const [onb, setOnb] = useState(null);
-  const [guide, setGuide] = useState(firstVisit ? "first" : null);
+  const [onb, setOnb] = useState(openSetup ? 0 : null);
+  const [guide, setGuide] = useState(firstVisit && !openSetup ? "first" : null);
+  useEffect(() => { if (openSetup) { setGuide(null); setOnb(0); } }, [openSetup]);
   const [guideReady, setGuideReady] = useState(false);
   useEffect(() => {
     // start once the Today card, the weather and the advice are on screen (or after 25 s)
@@ -579,7 +580,7 @@ function CropDetail({ plot, day, fmtDate, unit }) {
   const [wLvl, wKey] = plot.scenario.waterlog?.[day] ? ["risk", "w_logged"] : waterWord(s.ks[day]);
   const [hLvl, hKey] = heatWord(s.heat[day] ?? 0);
   const leaf = Math.round(100 * (s.cc[day] ?? 0));
-  const yieldTxt = (v) => toUnit(v, unit).toFixed(unit === "maund" ? 0 : 1);
+  const yieldTxt = (v) => { const x = toUnit(v, unit); return x.toFixed(unit === "maund" && x >= 20 ? 0 : 1); };
 
   return (
     <div className="crop-detail">

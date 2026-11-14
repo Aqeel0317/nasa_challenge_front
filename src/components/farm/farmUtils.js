@@ -40,11 +40,15 @@ export const PRICE_PER_MAUND = {
   soybean: 6500, guar: 8000, sunflower: 6500, sesbania: 0, wheat: 3500, barley: 2800,
   oats: 900, mustard: 7000, chickpea: 9500, lentil: 11000, berseem: 900, potato: 1600,
 };
+// The farmer's own mandi prices (from the farm profile) replace the built-in ones.
+let FARMER_PRICES = {};
+export const setFarmerPrices = (p) => { FARMER_PRICES = { ...(p || {}) }; };
+export const priceOf = (crop) => (FARMER_PRICES[crop] > 0 ? FARMER_PRICES[crop] : PRICE_PER_MAUND[crop] ?? 0);
 // 1 t/ha = 1000 kg / 40 kg per maund / 2.471 acres per hectare
 export const MAUND_PER_ACRE = 10.12;
 
 // Value in rupees of a yield (t/ha) on a number of acres
-export const rupees = (crop, tha, acres) => tha * MAUND_PER_ACRE * acres * (PRICE_PER_MAUND[crop] ?? 0);
+export const rupees = (crop, tha, acres) => tha * MAUND_PER_ACRE * acres * priceOf(crop);
 
 // "Rs 4.2 lakh" / "4.2 لاکھ روپے": the way farmers talk about money
 export function formatRs(v, lang) {

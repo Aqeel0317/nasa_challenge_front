@@ -157,6 +157,7 @@ export default function LivePanel({ lat, lon, place }) {
               <li>🛰️ {t("live_smap", { v: smap.value.toFixed(2), date: fmt(smap.date) })}{" "}
                 <a href={smap.url} target="_blank" rel="noopener noreferrer" className="src-link">NASA SMAP</a></li>
             )}
+            {soil != null && <li className="muted small soil-reconcile">ℹ️ {t("soilReconcile")}</li>}
           </ul>
         </div>
       )}

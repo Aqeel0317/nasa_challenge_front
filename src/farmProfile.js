@@ -4,6 +4,7 @@
 // and survives a reload.
 import { useEffect, useState } from "react";
 import { FARM_DEFAULTS } from "./farmCache.js";
+import { setFarmerPrices } from "./components/farm/farmUtils.js";
 
 const KEY = "aapkakhet-farm-v2";
 // Seasonal irrigation (mm) behind each water choice; the planner's engine uses mm.
@@ -21,6 +22,7 @@ function read() {
 }
 
 let current = typeof window === "undefined" ? { ...FARM_DEFAULTS } : read();
+setFarmerPrices(current.prices);
 const listeners = new Set();
 
 export function getProfile() { return current; }
@@ -31,6 +33,7 @@ export function setProfile(update) {
   if (next.irrigation !== current.irrigation && next.irrigation_mm === current.irrigation_mm) next.irrigation_mm = IRRIGATION_MM[next.irrigation];
   else if (next.irrigation_mm !== current.irrigation_mm && next.irrigation === current.irrigation && next.irrigation_mm != null) next.irrigation = irrigationFromMm(next.irrigation_mm);
   current = next;
+  setFarmerPrices(current.prices);
   try { localStorage.setItem(KEY, JSON.stringify(current)); } catch { /* blocked: keep in memory */ }
   listeners.forEach((fn) => fn(current));
 }

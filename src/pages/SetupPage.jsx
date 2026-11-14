@@ -4,6 +4,8 @@ import {
   SlidersHorizontal, Sprout, Wallet,
 } from "lucide-react";
 import { useI18n } from "../i18n.jsx";
+import { useFarmProfile } from "../farmProfile.js";
+import { PRICE_PER_MAUND } from "../components/farm/farmUtils.js";
 import { Button, PageHeader } from "../components/ui.jsx";
 import { QUICK_PLACES, fieldLabel, placeName, searchPlaces } from "../weather.js";
 
@@ -31,6 +33,8 @@ export default function SetupPage(props) {
 }
 
 function QuickSetup({ go, form, setForm, onSubmit, loading }) {
+  const { crop } = useI18n();
+  const [profile, setProfile] = useFarmProfile();
   const { t, lang } = useI18n();
   const [q, setQ] = useState("");
   const [results, setResults] = useState([]);
@@ -170,6 +174,18 @@ function QuickSetup({ go, form, setForm, onSubmit, loading }) {
                       onClick={() => setForm((f) => ({ ...f, market: f.market === k ? null : k }))}>{t(`market_${k}`)}</button>
             ))}
           </div>
+          <p className="qs-sub">{t("myPrices")}</p>
+          <div className="price-grid">
+            {["wheat", "cotton", "rice", "maize"].map((k) => (
+              <label key={k} className="price-in">
+                <span>{crop(k)}</span>
+                <input className="num" type="number" inputMode="numeric" min="0" step="50" dir="ltr"
+                       placeholder={String(PRICE_PER_MAUND[k])} value={profile.prices?.[k] ?? ""}
+                       onChange={(e) => setProfile((p) => ({ ...p, prices: { ...(p.prices || {}), [k]: e.target.value === "" ? undefined : Math.max(0, +e.target.value) } }))} />
+              </label>
+            ))}
+          </div>
+          <p className="muted small">{t("myPricesNote")}</p>
           <p className="qs-sub">{t("equipHave")}</p>
           <div className="chips" role="group" aria-label={t("equipHave")}>
             {["tractor", "laser_leveller", "tubewell"].map((k) => {
