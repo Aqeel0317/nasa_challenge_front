@@ -4,7 +4,7 @@ import {
   Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, LineChart,
   ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
-import { FARM_DEFAULTS, LAST_YEAR, farmRequest, fetchFarm, readCached } from "../farmCache.js";
+import { CURRENT_YEAR, FARM_DEFAULTS, farmRequest, fetchFarm, readCached } from "../farmCache.js";
 import { useI18n } from "../i18n.jsx";
 import useStoredState from "../hooks/useStoredState.js";
 import { Button, PageHeader, Panel } from "../components/ui.jsx";
@@ -26,7 +26,7 @@ const CURVES = ["cc", "soil_water", "biomass"];
 const AXIS = { fill: "var(--muted)", fontSize: 12 };
 const TIP = { background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8 };
 
-const YEARS = Array.from({ length: 12 }, (_, i) => LAST_YEAR - i);
+const YEARS = Array.from({ length: 13 }, (_, i) => CURRENT_YEAR - i);
 
 const DEFAULTS = FARM_DEFAULTS;
 
@@ -39,7 +39,8 @@ class WebGLGuard extends Component {
 export default function FarmPage({ fieldForm }) {
   const { t, lang, crop } = useI18n();
   const [stored, setSettings] = useStoredState("aapkakhet-farm-v2", DEFAULTS);
-  const settings = { ...DEFAULTS, ...stored, fields: stored.fields?.length ? stored.fields : DEFAULTS.fields };
+  const settings = { ...DEFAULTS, ...stored, fields: stored.fields?.length ? stored.fields : DEFAULTS.fields,
+    year: stored.yearChosen ? stored.year : CURRENT_YEAR };
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -147,6 +148,21 @@ export default function FarmPage({ fieldForm }) {
   const monthTick = (iso) => fmtDate(iso, { month: "short" });
   const monthStarts = data ? data.dates.filter((iso) => iso.endsWith("-01")) : [];
 
+  // Which part of the season is observed, forecast or expected (climate normals)
+  const tl = data?.weather?.timeline;
+  const idxOf = (iso) => (iso && data ? data.dates.indexOf(iso) : -1);
+  const obsEnd = idxOf(tl?.observed_until), fcEnd = idxOf(tl?.forecast_until), todayIdx = idxOf(tl?.today);
+  const kindAt = (i) => (!tl?.today ? "observed" : i <= obsEnd ? "observed" : i <= fcEnd ? "forecast" : "expected");
+  // Open a running season on today
+  const shownFor = useRef("");
+  useEffect(() => {
+    if (!data) return;
+    const sig = `${data.dates[0]}|${tl?.today || ""}`;
+    if (shownFor.current === sig) return;
+    shownFor.current = sig;
+    if (todayIdx >= 0) setDay(todayIdx);
+  }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Jump to the worst day of a disaster so the farmer sees it, then play from there
   const watchScenario = (sc) => {
     setSettings((s) => ({ ...DEFAULTS, ...s, scenario: sc, scenarioMode: "manual" }));
@@ -238,9 +254,10 @@ export default function FarmPage({ fieldForm }) {
             <div className="row-fields">
               <label className="field">
                 <span className="field-label">{t("season")}</span>
-                <select className="select" value={settings.year} onChange={(e) => set("year", +e.target.value)}>
+                <select className="select" value={settings.year}
+                        onChange={(e) => setSettings((s) => ({ ...DEFAULTS, ...s, year: +e.target.value, yearChosen: true }))}>
                   {YEARS.map((y) => (
-                    <option key={y} value={y}>{t("seasonOpt", { y, y2: y + 1 })}</option>
+                    <option key={y} value={y}>{y === CURRENT_YEAR ? t("seasonLive", { y, y2: y + 1 }) : t("seasonOpt", { y, y2: y + 1 })}</option>
                   ))}
                 </select>
               </label>
@@ -310,6 +327,7 @@ export default function FarmPage({ fieldForm }) {
                 )}
                 <div className="wx-ticker" aria-live="polite">
                   <span><bdi>{fmtDate(data.dates[d], { day: "numeric", month: "short" })}</bdi></span>
+                  {tl?.today && <span className={`wx-kind kind-${kindAt(d)}`}>{t(`kind_${kindAt(d)}`)}</span>}
                   <span>🌡️ <bdi className="num">{Math.round(wx.tmax)}°C</bdi></span>
                   <span>🌧️ <bdi className="num">{Math.round(wx.rain)} {t("mm")}</bdi></span>
                 </div>
@@ -325,11 +343,27 @@ export default function FarmPage({ fieldForm }) {
                   <div className="timeline-date"><bdi>{fmtDate(data.dates[d])}</bdi></div>
                   <input type="range" min="0" max={data.dates.length - 1} value={d} aria-label={t("dateLabel")}
                          onChange={(e) => { setPlaying(false); setDay(+e.target.value); }} />
+                  {tl?.today && (
+                    <div className="season-bands" dir="ltr" aria-hidden="true">
+                      <i className="band-observed" style={{ width: `${(100 * (obsEnd + 1)) / data.dates.length}%` }} />
+                      <i className="band-forecast" style={{ width: `${(100 * Math.max(0, fcEnd - obsEnd)) / data.dates.length}%` }} />
+                      <i className="band-expected" />
+                      {todayIdx >= 0 && <b className="band-today" style={{ left: `${(100 * todayIdx) / data.dates.length}%` }} />}
+                    </div>
+                  )}
                   <div className="timeline-months" aria-hidden="true">
                     {monthStarts.map((iso) => (
                       <span key={iso}>{monthTick(iso)}</span>
                     ))}
                   </div>
+                  {tl?.today && (
+                    <div className="season-key">
+                      <span><i className="band-observed" />{t("kind_observed")}{tl.observed_until && <> · <bdi>{fmtDate(tl.observed_until, { day: "numeric", month: "short" })}</bdi></>}</span>
+                      <span><i className="band-forecast" />{t("kind_forecast")}</span>
+                      <span><i className="band-expected" />{t("kind_expected")}</span>
+                      {todayIdx >= 0 && <button type="button" className="today-btn" onClick={() => { setPlaying(false); setDay(todayIdx); }}>📍 {t("todayShort")}</button>}
+                    </div>
+                  )}
                 </div>
               </div>
             </Panel>
@@ -374,7 +408,7 @@ export default function FarmPage({ fieldForm }) {
           </div>
 
           <div className="source-row">
-            <span className="tag">{t("srcWeather")}: {data.weather.observed ? t("weatherObserved") : t("weatherSynthetic")}</span>
+            <span className="tag">{t("srcWeather")}: {tl?.today ? data.weather.source : data.weather.observed ? t("weatherObserved") : t("weatherSynthetic")}</span>
             <span className="tag">{t("srcSoil")}: {t(`tex_${data.soil.class}`)}</span>
             <span className="tag tag-sim">{t("simulatedBadge")}</span>
           </div>

@@ -716,6 +716,10 @@ const STRINGS = {
     tour_close_h: "See the weather coming.",
     tour_close_cap: "Free · Urdu and English · Works on any phone · Live NASA data",
     tour_close_tag: "Aap ka Khet · NASA Space Apps Challenge 2026",
+    seasonLive: "This season {y}–{y2} (live)",
+    kind_observed: "NASA observed",
+    kind_forecast: "Forecast",
+    kind_expected: "Expected (climate normal)",
   },
   ur: {
     lm_weather: "ناسا کا دس سالہ موسمی ڈیٹا پڑھا جا رہا ہے",
@@ -1431,6 +1435,10 @@ const STRINGS = {
     tour_close_h: "موسم کو آتا دیکھیں۔",
     tour_close_cap: "مفت · اردو اور انگریزی · ہر فون پر · ناسا کا براہِ راست ڈیٹا",
     tour_close_tag: "آپ کا کھیت · NASA Space Apps Challenge 2026",
+    seasonLive: "یہ سیزن {y}–{y2} (براہِ راست)",
+    kind_observed: "ناسا کا مشاہدہ",
+    kind_forecast: "پیشگوئی",
+    kind_expected: "متوقع (موسمی اوسط)",
   },
 };
 

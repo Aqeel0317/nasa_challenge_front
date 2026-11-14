@@ -6,9 +6,12 @@ import { DEFAULT_FIELDS } from "./components/farm/farmUtils.js";
 // The last farm year (May-April) that is complete, so NASA POWER has every day.
 const now = new Date();
 export const LAST_YEAR = now.getFullYear() - (now.getMonth() >= 5 ? 1 : 2);
+// The farm year that is running now (it starts on 1 May): simulated from NASA
+// observations so far, the forecast, then NASA climate normals.
+export const CURRENT_YEAR = now.getFullYear() - (now.getMonth() >= 4 ? 0 : 1);
 
 export const FARM_DEFAULTS = {
-  lat: 31.42, lon: 73.08, place: "Faisalabad", year: LAST_YEAR, scenario: "normal", scenarioMode: "auto",
+  lat: 31.42, lon: 73.08, place: "Faisalabad", year: CURRENT_YEAR, scenario: "normal", scenarioMode: "auto",
   irrigation: "deficit", temp_offset: 2, rain_pct: 60, fields: DEFAULT_FIELDS,
 };
 
@@ -16,7 +19,7 @@ export const FARM_DEFAULTS = {
 export function farmRequest(settings) {
   const s = { ...FARM_DEFAULTS, ...settings };
   return {
-    lat: s.lat, lon: s.lon, year: s.year, scenario: s.scenario, irrigation: s.irrigation,
+    lat: s.lat, lon: s.lon, year: s.yearChosen ? s.year : CURRENT_YEAR, scenario: s.scenario, irrigation: s.irrigation,
     temp_offset: s.temp_offset, rain_pct: s.rain_pct,
     fields: (s.fields?.length ? s.fields : DEFAULT_FIELDS).map(({ kharif, rabi }) => ({ kharif, rabi })),
   };
