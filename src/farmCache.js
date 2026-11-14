@@ -25,7 +25,15 @@ export function farmRequest(settings) {
   };
 }
 
-const PREFIX = "aapkakhet-sim:";
+// Bump CACHE_VERSION whenever the model changes: results saved by an older model are
+// then never shown again (they would contradict the new numbers).
+const CACHE_VERSION = "v3-2026-11-15";
+const PREFIX = `aapkakhet-sim:${CACHE_VERSION}:`;
+try {   // drop results saved by older versions
+  Object.keys(localStorage).filter((k) => k.startsWith("aapkakhet-sim:") && !k.startsWith(PREFIX)).forEach((k) => localStorage.removeItem(k));
+  const idx = JSON.parse(localStorage.getItem("aapkakhet-sim-index") || "[]");
+  if (idx.some((k) => !k.startsWith(PREFIX))) localStorage.setItem("aapkakhet-sim-index", JSON.stringify(idx.filter((k) => k.startsWith(PREFIX))));
+} catch { /* storage blocked */ }
 const INDEX = "aapkakhet-sim-index";
 const KEEP = 4;           // results kept; each is roughly 150 KB
 const FRESH_MS = 6 * 3600 * 1000;

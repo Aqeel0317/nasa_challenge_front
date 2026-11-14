@@ -110,7 +110,9 @@ export function FieldBoard({ fields, setFields, data, selected, onSelect, unit }
   const byKey = data ? Object.fromEntries(data.plots.map((p) => [p.crop, p])) : {};
   const ready = (f) => data && cropsOf(f).every((k) => byKey[k]);
   const update = (i, patch) => setFields(fields.map((f, j) => (j === i ? { ...f, ...patch } : f)));
-  const values = fields.map((f) => (ready(f) && f.acres ? fieldValue(f, byKey, "scenario") / f.acres : null));
+  // Normal-year value, so the field totals add up exactly to the farm's "Normal year"
+  // figure everywhere; what a disaster takes away is shown in the disaster panel.
+  const values = fields.map((f) => (ready(f) && f.acres ? fieldValue(f, byKey, "baseline") / f.acres : null));
   const best = values.some((v) => v != null) && fields.length > 1 ? values.indexOf(Math.max(...values.filter((v) => v != null))) : -1;
 
   return (
