@@ -31,11 +31,11 @@
    "icon": "✅",
    "en": [
     "Start here every day",
-    "Each field tells you what to do today. Green means all fine. Red means give water today."
+    "Each field tells you what to do today. Green means no water today, and it says how many days until the next watering. Red means give water today. The percentage is the model's estimate for your field."
    ],
    "ur": [
     "ہر روز یہاں سے شروع کریں",
-    "ہر کھیت بتاتا ہے کہ آج کیا کرنا ہے۔ سبز کا مطلب سب ٹھیک ہے۔ سرخ کا مطلب آج پانی دیں۔"
+    "ہر کھیت بتاتا ہے کہ آج کیا کرنا ہے۔ سبز کا مطلب آج پانی نہیں، اور یہ بتاتا ہے کہ اگلا پانی کتنے دن بعد دینا ہے۔ سرخ کا مطلب آج پانی دیں۔ فیصد آپ کے کھیت کے لیے ماڈل کا اندازہ ہے۔"
    ]
   },
   {
@@ -70,11 +70,11 @@
    "icon": "⛅",
    "en": [
     "Weather at your farm",
-    "Today and the next 7 days, and below it what NASA satellites saw at your farm in the last 14 days."
+    "Today and the next 7 days, and below it what NASA satellites saw: the last 14 days, and soil moisture from NASA SMAP. A short note explains why the satellite's soil number differs from your field's."
    ],
    "ur": [
     "آپ کے فارم کا موسم",
-    "آج اور اگلے 7 دن کا موسم، اور نیچے پچھلے 14 دن میں ناسا سیٹلائٹ نے آپ کے فارم پر کیا دیکھا۔"
+    "آج اور اگلے 7 دن کا موسم، اور نیچے ناسا سیٹلائٹ نے کیا دیکھا: پچھلے 14 دن، اور ناسا SMAP سے مٹی کی نمی۔ ایک مختصر نوٹ بتاتا ہے کہ سیٹلائٹ کا عدد آپ کے کھیت کے عدد سے مختلف کیوں ہے۔"
    ]
   },
   {
@@ -83,11 +83,11 @@
    "icon": "🔥",
    "en": [
     "What if a disaster comes?",
-    "Tap drought, heatwave or heavy rain to see what it would do to your crops, and the loss in rupees."
+    "Each button shows what drought, a heatwave or heavy rain would cost you in rupees. For heavy rain it also shows how many days the soil stays waterlogged. Tap one to watch it happen on your farm."
    ],
    "ur": [
     "اگر آفت آ جائے تو؟",
-    "خشک سالی، گرمی کی لہر یا تیز بارش دبائیں اور دیکھیں کہ فصل کا کیا ہوگا، اور نقصان روپوں میں۔"
+    "ہر بٹن بتاتا ہے کہ خشک سالی، گرمی کی لہر یا تیز بارش سے آپ کا کتنے روپے کا نقصان ہوگا۔ تیز بارش میں یہ بھی بتاتا ہے کہ مٹی کتنے دن پانی میں ڈوبی رہتی ہے۔ اسے اپنے فارم پر ہوتا دیکھنے کے لیے کوئی بٹن دبائیں۔"
    ]
   },
   {
@@ -101,6 +101,19 @@
    "ur": [
     "اپنی فصل کیسے بچائیں",
     "آسان قدم جو آپ کا نقصان کم کرتے ہیں، آپ کے اپنے کھیتوں کے حساب سے۔"
+   ]
+  },
+  {
+   "id": "words",
+   "sel": ".glossary",
+   "icon": "📖",
+   "en": [
+    "Words explained, and the data",
+    "Open these to read what words like NDVI and evapotranspiration mean, in simple language, and to see every data source with a link."
+   ],
+   "ur": [
+    "الفاظ کی وضاحت، اور ڈیٹا",
+    "انہیں کھولیں اور آسان زبان میں پڑھیں کہ NDVI اور بخارات جیسے الفاظ کا مطلب کیا ہے، اور ہر ڈیٹا کا ذریعہ لنک کے ساتھ دیکھیں۔"
    ]
   },
   {
@@ -150,11 +163,11 @@
    "icon": "🌾",
    "en": [
     "Your fields",
-    "Up to four fields. For each one, pick the summer crop, the winter crop and the acres. Field 1 is what you grow now; use the others to try different crops."
+    "Up to four fields. Pick the summer crop, the winter crop and the acres. Each card shows a normal year's harvest value per acre, times your acres, so all fields add up to your farm's total."
    ],
    "ur": [
     "آپ کے کھیت",
-    "زیادہ سے زیادہ چار کھیت۔ ہر کھیت کے لیے گرمیوں کی فصل، سردیوں کی فصل اور ایکڑ چنیں۔ کھیت 1 وہ ہے جو آپ ابھی اگاتے ہیں، باقی سے دوسری فصلیں آزمائیں۔"
+    "زیادہ سے زیادہ چار کھیت۔ گرمیوں کی فصل، سردیوں کی فصل اور ایکڑ چنیں۔ ہر کارڈ عام سال میں فی ایکڑ فصل کی قیمت، ضرب آپ کے ایکڑ، دکھاتا ہے، تاکہ سب کھیت مل کر آپ کے فارم کا کل بنیں۔"
    ]
   },
   {
@@ -176,11 +189,11 @@
    "icon": "💸",
    "en": [
     "What it would cost you",
-    "The loss in rupees for each disaster, and which field holds up best. Tap Watch it happen to see it on your farm."
+    "The loss in rupees for each disaster, which field holds up best, and for heavy rain, how many days the soil stays waterlogged. Tap Watch it happen to see it on your farm."
    ],
    "ur": [
     "آپ کا کتنا نقصان ہوگا",
-    "ہر آفت کا نقصان روپوں میں، اور کون سا کھیت سب سے بہتر بچتا ہے۔ اسے اپنے فارم پر دیکھنے کے لیے ہوتا دیکھیں دبائیں۔"
+    "ہر آفت کا نقصان روپوں میں، کون سا کھیت سب سے بہتر بچتا ہے، اور تیز بارش میں مٹی کتنے دن پانی میں ڈوبی رہتی ہے۔ اسے اپنے فارم پر دیکھنے کے لیے ہوتا دیکھیں دبائیں۔"
    ]
   },
   {
@@ -251,6 +264,19 @@
    ]
   },
   {
+   "id": "farm",
+   "sel": "section[aria-labelledby=\"qs-q4\"]",
+   "icon": "🚜",
+   "en": [
+    "About your farm",
+    "Your farm size, soil type, how you sell, and the equipment you have, like a tractor, laser leveller or tubewell. Add your own mandi prices if you know them: every rupee figure and plan score will use them."
+   ],
+   "ur": [
+    "آپ کا فارم",
+    "آپ کا رقبہ، مٹی کی قسم، آپ فصل کیسے بیچتے ہیں، اور آپ کے پاس سامان، جیسے ٹریکٹر، لیزر لیولر یا ٹیوب ویل۔ اگر معلوم ہوں تو اپنی منڈی قیمتیں لکھیں: ہر روپے کا عدد اور منصوبوں کا اسکور انہیں استعمال کرے گا۔"
+   ]
+  },
+  {
    "id": "go",
    "sel": ".qs-go",
    "icon": "🔍",
@@ -270,12 +296,12 @@
    "sel": ".plan-list",
    "icon": "🏆",
    "en": [
-    "Your best plans, ranked",
-    "Each option is an order of crops for three years. The best match is at the top. Tap one to see it."
+    "Your rotation and better options",
+    "Your current rotation comes first, scored the same way, so you can compare. Below it are five different strategies: best overall, least water, best for soil, safest in a hotter future, and best earning."
    ],
    "ur": [
-    "آپ کے بہترین منصوبے",
-    "ہر آپشن تین سال کی فصلوں کی ترتیب ہے۔ سب سے بہتر اوپر ہے۔ دیکھنے کے لیے کسی ایک کو دبائیں۔"
+    "آپ کا چکر اور بہتر آپشن",
+    "آپ کا موجودہ فصلی چکر سب سے پہلے ہے، اسی طرح جانچا گیا تاکہ آپ موازنہ کر سکیں۔ اس کے نیچے پانچ مختلف طریقے ہیں: مجموعی بہترین، سب سے کم پانی، مٹی کے لیے بہترین، گرم مستقبل میں سب سے محفوظ، اور سب سے زیادہ کمائی۔"
    ]
   },
   {
@@ -302,6 +328,19 @@
    "ur": [
     "یہ منصوبہ کیوں",
     "مٹی، پانی، موسم اور منافع پر اس کے نمبر، اور وجوہات آسان الفاظ میں۔"
+   ]
+  },
+  {
+   "id": "report",
+   "sel": ".plan-report",
+   "icon": "🔎",
+   "en": [
+    "Why, evidence and risks",
+    "For each plan: why it is suggested, the NASA data behind it with dates and links, what it improves, what we do not know, and what to check with your agriculture officer before you change."
+   ],
+   "ur": [
+    "کیوں، ثبوت اور خطرے",
+    "ہر منصوبے کے لیے: کیوں تجویز کیا، اس کے پیچھے ناسا کا ڈیٹا تاریخ اور لنک کے ساتھ، کیا بہتر کرتا ہے، ہمیں کیا معلوم نہیں، اور بدلنے سے پہلے اپنے زرعی افسر سے کیا پوچھیں۔"
    ]
   }
  ],
@@ -374,16 +413,29 @@
    ]
   },
   {
+   "id": "signal",
+   "sel": ".climate-signal",
+   "icon": "🌡️",
+   "en": [
+    "How the climate will change",
+    "How much hotter and how much wetter or drier it gets here by 2041 to 2050, and how many very hot days you have now."
+   ],
+   "ur": [
+    "موسم کیسے بدلے گا",
+    "2041 سے 2050 تک یہاں کتنی گرمی بڑھے گی اور بارش کتنی کم یا زیادہ ہوگی، اور ابھی سال میں کتنے بہت گرم دن ہوتے ہیں۔"
+   ]
+  },
+  {
    "id": "list",
    "sel": ".fit-list",
    "icon": "📊",
    "en": [
     "How well each crop fits",
-    "Green grows well, yellow is OK, red is a poor fit. The black line shows the fit in 2050 as the climate warms."
+    "Green grows well, yellow is OK, red is a poor fit. Each crop shows its fit today and by 2050, the days above its heat limit, and how much more water it will need."
    ],
    "ur": [
     "ہر فصل کتنی موزوں ہے",
-    "سبز اچھی اگتی ہے، پیلی ٹھیک ہے، سرخ موزوں نہیں۔ کالی لکیر بتاتی ہے کہ 2050 میں گرمی بڑھنے پر کیا حال ہوگا۔"
+    "سبز اچھی اگتی ہے، پیلی ٹھیک ہے، سرخ موزوں نہیں۔ ہر فصل آج اور 2050 تک اپنی موزونیت، اپنی گرمی کی حد سے زیادہ گرم دن، اور کتنا زیادہ پانی چاہیے، دکھاتی ہے۔"
    ]
   }
  ],
@@ -457,11 +509,11 @@
    "id": "crops",
    "en": [
     "What do you grow?",
-    "Tap the crops you grow: a summer crop, then a winter crop. The ones marked with a star are common near you. Each one becomes a field. Then set your total acres."
+    "Tap the crops you grow: a summer crop, then a winter crop. Nothing is picked for you; the ones with a star are common near you. Each one becomes a field. Then type your total acres."
    ],
    "ur": [
     "آپ کیا اگاتے ہیں؟",
-    "اپنی فصلیں دبائیں: پہلے گرمیوں کی فصل، پھر سردیوں کی فصل۔ ستارے والی فصلیں آپ کے علاقے میں عام ہیں۔ ہر ایک ایک کھیت بنے گی۔ پھر اپنے کل ایکڑ لکھیں۔"
+    "اپنی فصلیں دبائیں: پہلے گرمیوں کی، پھر سردیوں کی۔ آپ کے لیے کچھ پہلے سے نہیں چنا گیا؛ ستارے والی فصلیں آپ کے علاقے میں عام ہیں۔ ہر ایک ایک کھیت بنے گی۔ پھر اپنے کل ایکڑ لکھیں۔"
    ]
   },
   {
