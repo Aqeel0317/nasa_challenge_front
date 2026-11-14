@@ -8,7 +8,7 @@ const fitLevel = (v) => (v >= 0.75 ? "good" : v >= 0.5 ? "watch" : "risk");
 const trend = (now, fut) => (fut - now > 0.05 ? "up" : fut - now < -0.05 ? "down" : "flat");
 const TREND_ICON = { up: ArrowUp, flat: ArrowRight, down: ArrowDown };
 
-export default function CropsPage({ rows }) {
+export default function CropsPage({ rows, site }) {
   const { t, crop } = useI18n();
   // Headline names main crops, not cover crops
   const best = (season) => rows.filter((r) => r.season === season && r.role !== "cover").sort((a, b) => b.now - a.now)[0];
@@ -19,6 +19,20 @@ export default function CropsPage({ rows }) {
       <PageHeader title={t("nav_crops")} lead={t("cropsLeadSimple")} />
       {bw && bc && (
         <p className="headline">{t("fitHeadline", { warm: crop(bw.crop), cool: crop(bc.crop) })}</p>
+      )}
+      {/* The climate signal behind the 2041-2050 lines, as numbers */}
+      {site?.future && (
+        <div className="climate-signal" role="note">
+          <strong>{t("signalTitle")}</strong>
+          <ul>
+            <li>🌡️ {t("signalTemp", { dt: (site.future.delta_t >= 0 ? "+" : "") + site.future.delta_t.toFixed(1) })}</li>
+            <li>🌧️ {t("signalRain", { dp: (site.future.delta_p_pct >= 0 ? "+" : "") + Math.round(site.future.delta_p_pct) })}</li>
+            {site.extremes?.heat_days_per_year != null && (
+              <li>🔥 {t("signalHot", { n: Math.round(site.extremes.heat_days_per_year) })}</li>
+            )}
+          </ul>
+          <small className="muted">{t("signalSource", { model: site.future.model || "CMIP6" })}</small>
+        </div>
       )}
 
       <div className="detail-grid">
@@ -42,6 +56,7 @@ export default function CropsPage({ rows }) {
                     <span className={`fit-trend trend-${tr}`}>
                       <Icon size={14} aria-hidden="true" className={tr === "flat" ? "flip-rtl" : ""} />
                       {t(`trend_${tr}`)}
+                      <bdi className="num fit-nums">{Math.round(r.now * 100)} → {Math.round(r.future * 100)}/100</bdi>
                     </span>
                   </li>
                 );

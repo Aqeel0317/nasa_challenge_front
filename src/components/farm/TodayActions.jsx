@@ -1,5 +1,6 @@
 import { Send, Square, Volume2 } from "lucide-react";
 import { useI18n } from "../../i18n.jsx";
+import { Term } from "./Glossary.jsx";
 import { CROP_ICON, activeCrop } from "./farmUtils.js";
 import { useSpeech } from "./FarmAdvice.jsx";
 
@@ -26,7 +27,7 @@ export default function TodayActions({ data, fields, fc, nasaDays = [] }) {
   const actions = [];
   // 1. Farm-wide weather warnings for the next three days
   if (hot && hot.v >= 40) actions.push({ lvl: "risk", icon: "🔥", head: t("today_heat_h", { t: Math.round(hot.v), day: dayName(d.time[hot.k]) }), why: t("today_heat_w") });
-  if (cold && cold.v <= 2) actions.push({ lvl: "risk", icon: "❄️", head: t("today_frost_h", { t: Math.round(cold.v), day: dayName(d.time[cold.k]) }), why: t("today_frost_w") });
+  if (cold && cold.v <= 2) actions.push({ lvl: "risk", icon: "❄️", head: t("today_frost_h", { t: Math.round(cold.v), day: dayName(d.time[cold.k]) }), why: t("today_frost_w"), term: "frost" });
   if (wet && wet.v >= 30) actions.push({ lvl: "watch", icon: "⛈️", head: t("today_storm_h", { mm: Math.round(wet.v), day: dayName(d.time[wet.k]) }), why: t("today_storm_w") });
 
   // 2. Each field: water today, or what is next
@@ -91,7 +92,7 @@ export default function TodayActions({ data, fields, fc, nasaDays = [] }) {
           <li key={k} className={`today-item lvl-${a.lvl}`}>
             <span className="today-ic" aria-hidden="true">{a.icon}</span>
             <div>
-              <p className="today-line">{a.pill && <b className="today-pill">{a.pill}</b>}<strong>{a.head}</strong></p>
+              <p className="today-line">{a.pill && <b className="today-pill">{a.pill}</b>}<strong>{a.head}</strong>{a.term && <Term k={a.term} />}</p>
               <p className="today-why">{a.why}</p>
             </div>
           </li>

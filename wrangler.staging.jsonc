@@ -1,0 +1,17 @@
+{
+  // Staging copy for checking changes before they go live (served on workers.dev).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "aapkakhet-staging",
+  "main": "worker/index.js",
+  "workers_dev": true,
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "vars": {
+    "API_ORIGIN": "https://aapkakhet-api-staging.azurewebsites.net"
+  }
+}

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Term } from "./Glossary.jsx";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useI18n } from "../../i18n.jsx";
 import { Panel } from "../ui.jsx";
@@ -224,7 +225,7 @@ export function WaterTank({ value }) {
     <div className="tank-wrap">
       <div className="tank" aria-hidden="true"><div className="tank-fill" style={{ height: `${v}%` }} /></div>
       <div>
-        <div className="gauge-label">{t("soilWaterL")}</div>
+        <div className="gauge-label">{t("soilWaterL")} <Term k="wb" /></div>
         <div className="gauge-value"><bdi>{Math.round(v)}%</bdi></div>
         <div className={`gauge-word ${word}`}>{t(word)}</div>
       </div>

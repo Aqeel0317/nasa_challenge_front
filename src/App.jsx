@@ -158,7 +158,7 @@ export default function App() {
   } else if (page === "field") {
     content = <FieldPage site={result.site} />;
   } else if (page === "crops") {
-    content = <CropsPage rows={result.suitability} />;
+    content = <CropsPage rows={result.suitability} site={result.site} />;
   } else {
     content = <SoilPage rotations={result.rotations} selected={selected} setSelected={setSelected} />;
   }

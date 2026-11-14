@@ -19,6 +19,7 @@ import LocationPicker from "../components/farm/LocationPicker.jsx";
 import TodayActions from "../components/farm/TodayActions.jsx";
 import Onboarding, { ONBOARD_KEY } from "../components/farm/Onboarding.jsx";
 import Guide from "../components/farm/Guide.jsx";
+import Glossary, { Term } from "../components/farm/Glossary.jsx";
 import { useFarmProfile } from "../farmProfile.js";
 import FarmAdvice, { HowSteps } from "../components/farm/FarmAdvice.jsx";
 
@@ -239,6 +240,7 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
                       onPick={(p) => setSettings((s) => ({ ...DEFAULTS, ...s, lat: p.lat, lon: p.lon, place: p.name }))} />
       {today && data && <TodayActions data={data} fields={fields} fc={fc} nasaDays={liveNasa?.data?.weather?.days || []} />}
       {today && <LivePanel lat={settings.lat} lon={settings.lon} place={settings.place} />}
+      {today && <Glossary />}
 
       {data && <FarmAdvice data={data} fields={fields} scenario={settings.scenario} onScenario={watchScenario} now={auto} />}
 
@@ -363,7 +365,7 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
                 </div>
                 {view === "2d" ? (
                   <label className="inline-field">
-                    <span>{t("colourBy")}</span>
+                    <span>{t("colourBy")} {metric === "ndvi" && <Term k="ndvi" />}</span>
                     <select className="select" value={metric} onChange={(e) => setMetric(e.target.value)}>
                       {METRICS.map((m) => <option key={m} value={m}>{t(`metric_${m}`)}</option>)}
                     </select>
@@ -571,7 +573,8 @@ function CropDetail({ plot, day, fmtDate, unit }) {
   const growing = st >= 0 && st <= 3;
   const b = plot.baseline.summary, sc = plot.scenario.summary;
   const change = b.yield_t_ha ? Math.round((100 * (sc.yield_t_ha - b.yield_t_ha)) / b.yield_t_ha) : 0;
-  const [wLvl, wKey] = waterWord(s.ks[day]);
+  // waterlogged soil is "too wet", not "thirsty", even though both slow the crop
+  const [wLvl, wKey] = plot.scenario.waterlog?.[day] ? ["risk", "w_logged"] : waterWord(s.ks[day]);
   const [hLvl, hKey] = heatWord(s.heat[day] ?? 0);
   const leaf = Math.round(100 * (s.cc[day] ?? 0));
   const yieldTxt = (v) => toUnit(v, unit).toFixed(unit === "maund" ? 0 : 1);

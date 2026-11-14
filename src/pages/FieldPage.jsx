@@ -4,6 +4,7 @@ import {
 } from "recharts";
 import { CloudRain, Droplets, Flame, Sun, ThermometerSun } from "lucide-react";
 import { useI18n } from "../i18n.jsx";
+import Glossary, { Term } from "../components/farm/Glossary.jsx";
 import { Advanced, Level, PageHeader, Panel } from "../components/ui.jsx";
 
 const AXIS = { fill: "var(--muted)", fontSize: 12 };
@@ -160,7 +161,7 @@ export default function FieldPage({ site }) {
 
         {/* ---- satellite view ---- */}
         <Panel title={t("satellite")}>
-          <p className="sat-sentence">{t("satSentence", { green: greenShare, bare: bareShare, n: ndvi.crop_cycles_per_year })}</p>
+          <p className="sat-sentence">{t("satSentence", { green: greenShare, bare: bareShare, n: ndvi.crop_cycles_per_year })} <Term k="ndvi" /></p>
           <div className="green-strip" aria-hidden="true">
             {ndvi.series.map(([date, v]) => (
               <span key={date} title={`${date}: ${v.toFixed(2)}`}
@@ -188,6 +189,7 @@ export default function FieldPage({ site }) {
       <Advanced label={t("advancedCharts")}>
         <FieldCharts site={site} />
       </Advanced>
+      <Glossary />
     </div>
   );
 }

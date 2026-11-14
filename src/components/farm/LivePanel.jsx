@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getLive } from "../../api.js";
 import { useI18n } from "../../i18n.jsx";
+import { Term } from "./Glossary.jsx";
 import { useForecast, weatherLook } from "../../weather.js";
 
 // Live from NASA: the last days of NASA POWER weather at the field, and open natural
@@ -112,6 +113,7 @@ export default function LivePanel({ lat, lon, place }) {
   const hottest = days.reduce((a, d) => (d.tmax > (a?.tmax ?? -99) ? d : a), null);
   const rain = days.reduce((s, d) => s + (d.rain || 0), 0);
   const soil = [...days].reverse().find((d) => d.soil != null)?.soil;
+  const smap = live?.data?.smap;
   const hotDays = week.filter((d) => d.tmax >= 40).length;
   const soilWord = soil == null ? null : soil < 30 ? "soil_dry" : soil < 60 ? "soil_ok" : "soil_wet";
   const alert = hotDays >= 3 ? t("live_alert_hot", { n: hotDays })
@@ -150,7 +152,11 @@ export default function LivePanel({ lat, lon, place }) {
           <ul className="live-facts">
             {hottest && <li>🌡️ {t("live_hottest", { t: Math.round(hottest.tmax), date: fmt(hottest.date) })}</li>}
             <li>🌧️ {t("live_rain", { mm: Math.round(rain), n: days.length })}</li>
-            {soil != null && <li className={soilWord}>💧 {t("live_soil", { pct: soil })} · {t(soilWord)}</li>}
+            {soil != null && <li className={soilWord}>💧 {t("live_soil", { pct: soil })} · {t(soilWord)} <Term k="sma" /></li>}
+            {smap && (
+              <li>🛰️ {t("live_smap", { v: smap.value.toFixed(2), date: fmt(smap.date) })}{" "}
+                <a href={smap.url} target="_blank" rel="noopener noreferrer" className="src-link">NASA SMAP</a></li>
+            )}
           </ul>
         </div>
       )}
