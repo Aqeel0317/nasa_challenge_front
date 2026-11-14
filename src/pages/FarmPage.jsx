@@ -18,6 +18,7 @@ import { autoScenario, useForecast } from "../weather.js";
 import LocationPicker from "../components/farm/LocationPicker.jsx";
 import TodayActions from "../components/farm/TodayActions.jsx";
 import Onboarding, { ONBOARD_KEY } from "../components/farm/Onboarding.jsx";
+import Guide from "../components/farm/Guide.jsx";
 import FarmAdvice, { HowSteps } from "../components/farm/FarmAdvice.jsx";
 
 const Farm3D = lazy(() => import("../components/farm/Farm3D.jsx"));
@@ -43,10 +44,25 @@ class WebGLGuard extends Component {
 export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
   const today = pageView === "today";
   // First visit: a short welcome to set up the farm (shown once, can be reopened)
-  const [onb, setOnb] = useState(() => {
-    if (pageView !== "today") return null;
-    try { return localStorage.getItem(ONBOARD_KEY) ? null : 0; } catch { return null; }
+  // First visit: the narrated "How to use" walk-through on the sample farm, then the
+  // short welcome that sets up the farmer's own farm. Both can be reopened.
+  const [firstVisit] = useState(() => {
+    if (pageView !== "today") return false;
+    try { return !localStorage.getItem(ONBOARD_KEY); } catch { return false; }
   });
+  const [onb, setOnb] = useState(null);
+  const [guide, setGuide] = useState(firstVisit ? "first" : null);
+  const [guideReady, setGuideReady] = useState(false);
+  useEffect(() => {
+    // start once the Today card, the weather and the advice are on screen (or after 25 s)
+    if (!guide || guideReady) return undefined;
+    const t0 = Date.now();
+    const id = setInterval(() => {
+      const ok = [".today-card", ".live .today", ".advice-meter"].every((q) => document.querySelector(q));
+      if (ok || Date.now() - t0 > 25000) { clearInterval(id); setTimeout(() => setGuideReady(true), ok ? 700 : 0); }
+    }, 300);
+    return () => clearInterval(id);
+  }, [guide, guideReady]);
   const closeOnb = () => { try { localStorage.setItem(ONBOARD_KEY, "1"); } catch { /* blocked */ } setOnb(null); };
   const { t, lang, crop } = useI18n();
   const [stored, setSettings] = useStoredState("aapkakhet-farm-v2", DEFAULTS);
@@ -190,6 +206,7 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
     <div className="page page-wide">
       <PageHeader title={today ? t("today_pageTitle") : t("farmTitle")} lead={today ? t("today_pageLead") : t("farmLead")} actions={today ? (
         <div className="today-actions-head">
+          <button type="button" className="btn btn-primary" onClick={() => setGuide("again")}>▶ {t("guide_open")}</button>
           <button type="button" className="btn" onClick={() => setOnb(0)}>✏️ {t("onb_edit")}</button>
           <button type="button" className="btn btn-quiet" onClick={() => setOnb(3)}>ℹ️ {t("onb_dataLink")}</button>
         </div>
@@ -202,6 +219,13 @@ export default function FarmPage({ fieldForm, view: pageView = "fields", go }) {
         </div>
       } />
       {!today && <HowSteps />}
+      {guide && guideReady && (
+        <Guide thenSetup={guide === "first"} onClose={() => {
+          const first = guide === "first";
+          setGuide(null); setGuideReady(false);
+          if (first) setOnb(0);
+        }} />
+      )}
       {onb != null && (
         <Onboarding settings={settings} startAt={onb} onClose={closeOnb}
                     onDone={(patch) => {

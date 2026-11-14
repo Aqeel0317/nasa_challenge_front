@@ -1,0 +1,74 @@
+/* "How to use" guide: glowing spotlight + narrated card */
+html.guide-open { scroll-behavior: auto; }
+.guide { position: fixed; inset: 0; z-index: 300; opacity: 0; transition: opacity .5s ease; font-family: "IBM Plex Sans", system-ui, sans-serif; }
+.guide.is-in { opacity: 1; }
+.guide[dir="rtl"] { font-family: "Noto Nastaliq Urdu", "IBM Plex Sans", serif; }
+
+.guide-hole { position: fixed; border-radius: 18px; pointer-events: none; box-shadow: 0 0 0 200vmax rgba(2, 14, 8, .74);
+  transition: top .65s cubic-bezier(.22, .9, .25, 1), left .65s cubic-bezier(.22, .9, .25, 1), width .65s cubic-bezier(.22, .9, .25, 1), height .65s cubic-bezier(.22, .9, .25, 1); }
+.guide.no-hole .guide-hole { box-shadow: 0 0 0 200vmax rgba(2, 14, 8, .88); }
+.guide-ring { position: absolute; inset: -3px; border-radius: 20px; border: 2px solid #9be7a6; animation: guide-pulse 2.2s ease-in-out infinite; }
+.guide.no-hole .guide-ring { display: none; }
+@keyframes guide-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(155, 231, 166, .35), 0 0 26px rgba(110, 220, 140, .45), inset 0 0 18px rgba(110, 220, 140, .2); }
+  50% { box-shadow: 0 0 0 6px rgba(155, 231, 166, .12), 0 0 48px rgba(110, 220, 140, .7), inset 0 0 26px rgba(110, 220, 140, .3); }
+}
+.guide-scrim { position: fixed; inset: 0; }
+
+.guide-card { position: fixed; width: min(460px, calc(100vw - 24px)); padding: 1.15rem 1.2rem 1rem; border-radius: 22px; color: #eef8ee;
+  background: linear-gradient(160deg, rgba(20, 52, 34, .96), rgba(8, 26, 16, .97)); border: 1px solid rgba(155, 231, 166, .28);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .04); backdrop-filter: blur(14px);
+  animation: guide-in .55s cubic-bezier(.2, .9, .25, 1) both; }
+@keyframes guide-in { from { opacity: 0; transform: translateY(14px) scale(.97); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+.guide-progress { position: absolute; inset: 0 0 auto; height: 3px; border-radius: 22px 22px 0 0; overflow: hidden; background: rgba(255, 255, 255, .07); }
+.guide-progress i { display: block; height: 100%; background: linear-gradient(90deg, #5fd38a, #c6f36b); transition: width .8s ease; }
+[dir="rtl"] .guide-progress i { margin-inline-start: auto; }
+.guide-top { display: flex; align-items: center; gap: .5rem; margin-block-end: .35rem; }
+.guide-step { margin-inline-end: auto; font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #9fd8ac; }
+[dir="rtl"] .guide-step { text-transform: none; letter-spacing: 0; font-size: .9rem; }
+.guide-icon { display: inline-grid; place-items: center; inline-size: 36px; block-size: 36px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .06); color: #eef8ee; transition: background .2s; }
+.guide-icon:hover { background: rgba(255, 255, 255, .14); }
+.guide-wave { display: inline-flex; align-items: center; gap: 3px; block-size: 20px; opacity: .3; transition: opacity .3s; }
+.guide-wave.on { opacity: 1; }
+.guide-wave i { inline-size: 3px; block-size: 5px; border-radius: 3px; background: #9be7a6; }
+.guide-wave.on i { animation: guide-bar .9s ease-in-out infinite; }
+.guide-wave.on i:nth-child(2) { animation-delay: .15s; }
+.guide-wave.on i:nth-child(3) { animation-delay: .3s; }
+.guide-wave.on i:nth-child(4) { animation-delay: .45s; }
+.guide-wave.on i:nth-child(5) { animation-delay: .6s; }
+@keyframes guide-bar { 0%, 100% { block-size: 5px; } 50% { block-size: 18px; } }
+.guide-card h2 { display: flex; align-items: center; gap: .6rem; margin: .2rem 0 .35rem; font-size: 1.35rem; line-height: 1.25; color: #fff;
+  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif; font-weight: 700; }
+[dir="rtl"] .guide-card h2 { font-family: "Noto Nastaliq Urdu", serif; line-height: 2; font-size: 1.3rem; }
+.guide-emoji { display: inline-grid; place-items: center; flex: none; inline-size: 44px; block-size: 44px; border-radius: 14px; font-size: 1.45rem;
+  background: radial-gradient(circle at 30% 25%, rgba(198, 243, 107, .35), rgba(95, 211, 138, .12)); border: 1px solid rgba(155, 231, 166, .3); }
+.guide-body { margin: 0 0 .9rem; font-size: 1.06rem; line-height: 1.55; color: #d9eedb; }
+[dir="rtl"] .guide-body { line-height: 2.15; font-size: 1.05rem; }
+.guide-foot { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.guide-grow { flex: 1; }
+.guide-foot .btn { border-radius: 999px; }
+.guide-foot .btn:not(.btn-primary) { background: rgba(255, 255, 255, .08); color: #eef8ee; border-color: rgba(255, 255, 255, .18); }
+.guide-foot .guide-next { background: linear-gradient(135deg, #5fd38a, #b9ee6a); color: #06210f; border: 0; font-weight: 700; box-shadow: 0 8px 26px rgba(95, 211, 138, .35); }
+
+.guide-hero { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 1rem; padding: 24px 16px; text-align: center; color: #eef8ee;
+  background: radial-gradient(60% 50% at 50% 42%, rgba(60, 150, 90, .32), transparent 70%); animation: guide-in .7s cubic-bezier(.2, .9, .25, 1) both; }
+.guide-orb { position: relative; display: grid; place-items: center; inline-size: 120px; block-size: 120px; border-radius: 50%; font-size: 3rem;
+  background: radial-gradient(circle at 35% 30%, #c6f36b, #2f9a5c 55%, #0d3b22); box-shadow: 0 0 60px rgba(110, 220, 140, .55), inset 0 -12px 30px rgba(0, 0, 0, .35);
+  animation: guide-float 4s ease-in-out infinite; }
+.guide-orb::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; border: 1px solid rgba(155, 231, 166, .45); animation: guide-ripple 2.4s ease-out infinite; }
+@keyframes guide-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes guide-ripple { from { transform: scale(.9); opacity: .9; } to { transform: scale(1.35); opacity: 0; } }
+.guide-kicker { margin: 0; color: #a9e3b4; font-weight: 600; letter-spacing: .04em; }
+.guide-hero h2 { margin: 0; max-inline-size: 30ch; font-size: clamp(1.4rem, 3.4vw, 2.1rem); line-height: 1.3; color: #fff; font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif; }
+[dir="rtl"] .guide-hero h2 { font-family: "Noto Nastaliq Urdu", serif; line-height: 2.1; }
+.guide-start { display: inline-flex; align-items: center; gap: .9rem; margin-block-start: .4rem; padding: .7rem 1.4rem .7rem .7rem; border: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(135deg, #5fd38a, #c6f36b); color: #06210f; text-align: start; box-shadow: 0 14px 40px rgba(95, 211, 138, .45); transition: transform .2s; }
+[dir="rtl"] .guide-start { padding: .7rem .7rem .7rem 1.4rem; }
+.guide-start:hover { transform: translateY(-2px) scale(1.02); }
+.guide-start-ic { display: grid; place-items: center; inline-size: 48px; block-size: 48px; border-radius: 50%; background: #06210f; color: #c6f36b; }
+.guide-start strong { display: block; font-size: 1.1rem; }
+.guide-start small { display: block; opacity: .75; font-size: .82rem; }
+.guide-skip { background: none; border: 0; color: #a9c9b0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; font-size: .95rem; }
+@media (max-width: 640px) { .guide-card { padding: 1rem; } .guide-body { font-size: 1rem; } }
+@media (prefers-reduced-motion: reduce) { .guide, .guide * { animation: none !important; transition: none !important; } }

@@ -1,0 +1,131 @@
+[
+ {
+  "id": "intro",
+  "icon": "👋",
+  "en": [
+   "Welcome!",
+   "In one minute I'll show you how to use this app. Then we'll set up your own farm."
+  ],
+  "ur": [
+   "خوش آمدید!",
+   "ایک منٹ میں آپ کو دکھاتے ہیں کہ یہ ایپ کیسے استعمال کریں۔ پھر ہم آپ کا اپنا فارم ترتیب دیں گے۔"
+  ]
+ },
+ {
+  "id": "place",
+  "sel": ".locpick-bar",
+  "icon": "📍",
+  "en": [
+   "Your farm's place",
+   "The weather and NASA data are for this place. Tap “Change place” to choose your village or district, or use GPS."
+  ],
+  "ur": [
+   "آپ کے فارم کی جگہ",
+   "موسم اور ناسا کا ڈیٹا اسی جگہ کا ہے۔ اپنا گاؤں یا ضلع چننے کے لیے “جگہ بدلیں” دبائیں، یا GPS استعمال کریں۔"
+  ]
+ },
+ {
+  "id": "today",
+  "sel": ".today-card",
+  "icon": "✅",
+  "en": [
+   "Start here every day",
+   "Each field tells you what to do today. Green means all fine. Red means give water today."
+  ],
+  "ur": [
+   "ہر روز یہاں سے شروع کریں",
+   "ہر کھیت بتاتا ہے کہ آج کیا کرنا ہے۔ سبز کا مطلب سب ٹھیک ہے۔ سرخ کا مطلب آج پانی دیں۔"
+  ]
+ },
+ {
+  "id": "listen",
+  "sel": ".today-card .listen",
+  "icon": "🔊",
+  "en": [
+   "Listen instead of reading",
+   "Tap “Listen” and the phone reads today's work aloud."
+  ],
+  "ur": [
+   "پڑھنے کے بجائے سنیں",
+   "“سنیں” دبائیں، فون آج کا کام بول کر سنائے گا۔"
+  ]
+ },
+ {
+  "id": "share",
+  "sel": ".today-share",
+  "icon": "📲",
+  "en": [
+   "Send it to your family",
+   "Send today's list on WhatsApp to your family or the people who work on your farm."
+  ],
+  "ur": [
+   "گھر والوں کو بھیجیں",
+   "آج کی فہرست واٹس ایپ پر اپنے گھر والوں یا کھیت پر کام کرنے والوں کو بھیجیں۔"
+  ]
+ },
+ {
+  "id": "weather",
+  "sel": ".live",
+  "icon": "⛅",
+  "en": [
+   "Weather at your farm",
+   "Today and the next 7 days, and below it what NASA satellites saw at your farm in the last 14 days."
+  ],
+  "ur": [
+   "آپ کے فارم کا موسم",
+   "آج اور اگلے 7 دن کا موسم، اور نیچے پچھلے 14 دن میں ناسا سیٹلائٹ نے آپ کے فارم پر کیا دیکھا۔"
+  ]
+ },
+ {
+  "id": "disaster",
+  "sel": ".advice-meter",
+  "icon": "🔥",
+  "en": [
+   "What if a disaster comes?",
+   "Tap drought, heatwave or heavy rain to see what it would do to your crops, and the loss in rupees."
+  ],
+  "ur": [
+   "اگر آفت آ جائے تو؟",
+   "خشک سالی، گرمی کی لہر یا تیز بارش دبائیں اور دیکھیں کہ فصل کا کیا ہوگا، اور نقصان روپوں میں۔"
+  ]
+ },
+ {
+  "id": "tips",
+  "sel": ".advice-tips",
+  "icon": "🛡️",
+  "en": [
+   "How to protect your harvest",
+   "Simple steps that lower your loss, worked out for your own fields."
+  ],
+  "ur": [
+   "اپنی فصل کیسے بچائیں",
+   "آسان قدم جو آپ کا نقصان کم کرتے ہیں، آپ کے اپنے کھیتوں کے حساب سے۔"
+  ]
+ },
+ {
+  "id": "pages",
+  "sel": ".nav",
+  "icon": "🧭",
+  "en": [
+   "More pages",
+   "“My fields” shows your farm in 3D through the season. “Next season” helps you choose what to grow."
+  ],
+  "ur": [
+   "مزید صفحے",
+   "“میرے کھیت” میں پورا موسم آپ کا فارم 3D میں دکھتا ہے۔ “اگلا سیزن” بتاتا ہے کہ کیا اگائیں۔"
+  ]
+ },
+ {
+  "id": "edit",
+  "sel": ".today-actions-head",
+  "icon": "✏️",
+  "en": [
+   "Change your farm any time",
+   "Tap “Set up my farm” to change your crops, acres or water. You can open this guide again from “How to use”."
+  ],
+  "ur": [
+   "فارم کبھی بھی بدلیں",
+   "فصلیں، ایکڑ یا پانی بدلنے کے لیے “اپنا فارم ترتیب دیں” دبائیں۔ یہ رہنمائی “استعمال کا طریقہ” سے دوبارہ کھولیں۔"
+  ]
+ }
+]
