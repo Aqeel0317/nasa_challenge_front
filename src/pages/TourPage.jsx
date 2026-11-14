@@ -148,7 +148,7 @@ function Scene({ k, beat }) {
           <GrowMark size={110} />
           <h2 className="ts-big">{t("tour_close_h")}</h2>
           <p className="ts-cap">{t("tour_close_cap")}</p>
-          <p className="ts-url">aapkakhet.aqeel03319384502.workers.dev</p>
+          <p className="ts-url">aapkakhet.readhaven.online</p>
           <p className="ts-tag">{t("tour_close_tag")}</p>
         </div>
       );

@@ -2,6 +2,8 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "aapkakhet",
   "main": "worker/index.js",
+  // Custom domain (a subdomain of a zone already on this Cloudflare account)
+  "routes": [{ "pattern": "aapkakhet.readhaven.online", "custom_domain": true }],
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./dist",
