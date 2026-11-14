@@ -10,12 +10,15 @@ export function unlock() {
     if (!AC) return;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = 0.55;
+    master.gain.value = muted ? 0 : level;
     master.connect(ctx.destination);
   }
   if (ctx.state === "suspended") ctx.resume();
 }
-export const setMuted = (m) => { muted = m; if (master) master.gain.value = m ? 0 : 0.55; };
+let level = 0.55;
+export const setMuted = (m) => { muted = m; if (master) master.gain.value = m ? 0 : level; };
+// Quieter effects under a voice-over
+export const setLevel = (v) => { level = v; if (master && !muted) master.gain.value = v; };
 
 const noiseBuffer = (seconds) => {
   const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * seconds), ctx.sampleRate);

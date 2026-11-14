@@ -4,7 +4,7 @@ import { useI18n } from "../i18n.jsx";
 import { GrowMark } from "../components/BrandLoader.jsx";
 import FarmScene from "../components/landing/FarmScene.jsx";
 import HeroField from "../components/landing/HeroField.jsx";
-import { play, setMuted, unlock } from "../sfx.js";
+import { play, setLevel, setMuted, unlock } from "../sfx.js";
 
 // A 60-second presentation of the project: eight scenes with captions held long
 // enough to read, CSS visual effects and synthesized sound effects (no music).
@@ -22,6 +22,11 @@ const SCENES = [
 const TOTAL = SCENES.reduce((s, x) => s + x.dur, 0);
 const STARTS = SCENES.reduce((a, s, i) => [...a, i ? a[i - 1] + SCENES[i - 1].dur : 0], []);
 const sceneAt = (t) => { let i = SCENES.length - 1; while (i > 0 && t < STARTS[i]) i -= 1; return i; };
+
+// Voice-over: one clip per scene, English or Urdu to match the app language
+// (made with demo-video-generator/spaceapps/tour-vo.js; files in public/tour/).
+const VO_LEAD = 0.45;
+const voUrl = (lang, key) => `/tour/${lang === "ur" ? "ur" : "en"}-${key}.mp3`;
 
 function Count({ to, dec = 0, suffix = "", ms = 1600 }) {
   const [v, setV] = useState(0);
@@ -156,7 +161,7 @@ function Scene({ k, beat }) {
 }
 
 export default function TourPage({ onExit }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [mute, setMute] = useState(false);
@@ -164,6 +169,32 @@ export default function TourPage({ onExit }) {
   const [done, setDone] = useState(false);
   const clock = useRef({ t: 0, last: 0 });
   const barRef = useRef(null);
+  const voices = useRef({});
+  const voice = (key) => {
+    const url = voUrl(lang, key);
+    if (!voices.current[url]) { const a = new Audio(url); a.preload = "auto"; voices.current[url] = a; }
+    return voices.current[url];
+  };
+  // Warm the clips so the first lines start on time
+  useEffect(() => { SCENES.forEach((s) => voice(s.key)); }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
+  const stopVoices = () => Object.values(voices.current).forEach((a) => a.pause());
+
+  // Play the current scene's line (from the right point after a seek or a pause)
+  useEffect(() => {
+    stopVoices();
+    if (!playing) return undefined;
+    setLevel(0.32);
+    const a = voice(SCENES[phase.i].key);
+    a.muted = mute;
+    const into = clock.current.t - STARTS[phase.i] - VO_LEAD;
+    let id = 0;
+    const go = () => { a.play().catch(() => {}); };
+    if (into >= 0) { if (Number.isFinite(a.duration) && into >= a.duration) return undefined; a.currentTime = into; go(); }
+    else { a.currentTime = 0; id = setTimeout(go, -into * 1000); }
+    return () => { clearTimeout(id); a.pause(); };
+  }, [phase.i, playing, lang]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { stopVoices(); setLevel(0.55); }, []);
+  useEffect(() => { Object.values(voices.current).forEach((a) => { a.muted = mute; }); }, [mute]);
   const rootRef = useRef(null);
 
   const fire = (from, to) => {
