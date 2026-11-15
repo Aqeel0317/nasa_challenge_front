@@ -2057,3 +2057,22 @@ input[type="range"] { width: 100%; accent-color: var(--canopy); height: 28px; }
 .price-in { display: grid; gap: .25rem; font-weight: 600; font-size: .9rem; }
 .price-in input { padding: .5rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: inherit; font-size: 1rem; }
 .soil-reconcile { line-height: 1.45; }
+
+/* ---- 360px fixes (phones only) ---- */
+@media (max-width: 760px) {
+  /* 1. Farm simulator steps: stacked rows that always fit the screen, never clipped */
+  .how3 { grid-template-columns: 1fr; grid-auto-flow: row; grid-auto-columns: auto; overflow: visible; scroll-snap-type: none; gap: .4rem; }
+  .how3 li { padding: .55rem .75rem; font-size: .92rem; scroll-snap-align: none; }
+  .how3-ic { font-size: 1.25rem; }
+  /* 2. "How to use": a normal button at the end of the page on phones, so it never
+        floats over card text; it sits just above the bottom menu */
+  .shell .guide-fab { position: static; grid-column: 1 / -1; justify-self: center; margin: .5rem auto calc(5.5rem + env(safe-area-inset-bottom));
+    animation: none; box-shadow: 0 6px 18px rgba(30, 110, 60, .25); }
+  .shell .guide-fab::before { display: none; }
+  .shell .main { padding-bottom: 1rem; }
+}
+/* mandi price boxes: each fills its column and never spills past it */
+.price-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr)); }
+.price-in { min-inline-size: 0; }
+.price-in input { inline-size: 100%; min-inline-size: 0; box-sizing: border-box; }
+@media (max-width: 760px) { .price-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
